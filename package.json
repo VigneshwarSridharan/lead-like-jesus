@@ -14,7 +14,6 @@
     "express": "^4.17.1",
     "next": "latest",
     "node-sass": "^4.14.1",
-    "node-xlsx": "^0.15.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-mp3-recorder": "^1.1.2",
