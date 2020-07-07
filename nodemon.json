@@ -2,7 +2,8 @@
     "verbose": true,
     "ignore": ["node_modules", ".next"],
     "watch": [
-      "server.js"
+      "server.js",
+      "./APIRouters"
     ],
     "ext": "js json"
   }

@@ -1,5 +1,6 @@
 const express = require('express')
 const next = require('next')
+const APIRouters = require('./APIRouters')
 
 const port = parseInt(process.env.PORT, 10) || 3000
 const dev = process.env.NODE_ENV !== 'production'
@@ -9,6 +10,7 @@ const handle = app.getRequestHandler()
 app.prepare().then(() => {
   const server = express()
   server.use(express.static('./public'))
+  server.use('/api', APIRouters)
 
   server.get('/a', (req, res) => {
     return app.render(req, res, '/a', req.query)
@@ -17,6 +19,7 @@ app.prepare().then(() => {
   server.get('/b', (req, res) => {
     return app.render(req, res, '/b', req.query)
   })
+
 
   server.all('*', (req, res) => {
     return handle(req, res)
