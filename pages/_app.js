@@ -20,9 +20,9 @@ const App = ({ Component, pageProps, router }) => {
     }
 
     return (
-        <Layout>
+        // <Layout>
             <Component {...pageProps} />
-        </Layout>
+        // </Layout>
     )
 }
 
