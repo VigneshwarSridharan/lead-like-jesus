@@ -1,13 +1,14 @@
 // import Layout from "./components/layout";
 import "../static/assets/scss/app.scss";
 import { useEffect, useState } from "react";
+import Navigation from "./components/Navigation";
 
 
 const App = ({ Component, pageProps, router }) => {
     const [checkAuth, setCheckAuth] = useState(false)
     useEffect(() => {
         const userDetails = JSON.parse(localStorage.getItem('user-details') || '{}')
-        if(!userDetails.id) {
+        if (!userDetails.id) {
             router.push('/login')
         }
         setCheckAuth(true);
@@ -20,9 +21,10 @@ const App = ({ Component, pageProps, router }) => {
     }
 
     return (
-        // <Layout>
+        <React.Fragment>
+            <Navigation />
             <Component {...pageProps} />
-        // </Layout>
+        </React.Fragment>
     )
 }
 
