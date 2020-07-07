@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Container, Row, Col, Card, ListGroup, ListGroupItem } from 'reactstrap';
-import IconPersonFill from '../components/icons/IconPersonFill';
+import IconPersonFill from './components/icons/IconPersonFill';
 import Recorder from 'react-mp3-recorder'
 
 export default function Home() {
