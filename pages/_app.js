@@ -1,5 +1,5 @@
 import Layout from "../components/layout";
-import "../static/assets/scss/app.scss";
+// import "../static/assets/scss/app.scss";
 import { useEffect, useState } from "react";
 
 
