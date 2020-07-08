@@ -1,6 +1,4 @@
 const express = require('express');
-const xlsx = require('node-xlsx');
-const fs = require('fs');
 const path = require('path')
 var XLSX = require('xlsx');
 const router = express.Router();
