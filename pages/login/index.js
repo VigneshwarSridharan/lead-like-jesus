@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { Container, Row, Col, Card, FormGroup, Label, Input, Button, Form } from "reactstrap"
-import IconBoxArrowRight from "../components/icons/IconBoxArrowRight"
+import IconBoxArrowRight from "../../components/icons/IconBoxArrowRight"
 import { useState } from "react"
 import { AuthServie } from "../../lib/APIServices"
 import Swal from 'sweetalert2'

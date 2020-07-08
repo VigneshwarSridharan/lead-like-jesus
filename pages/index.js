@@ -1,9 +1,12 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Container, Row, Col, Card, ListGroup, ListGroupItem } from 'reactstrap';
-import IconPersonFill from './components/icons/IconPersonFill';
-import Recorder from 'react-mp3-recorder'
+import { Container, Row, Col, Card, ListGroup, ListGroupItem, Button } from 'reactstrap';
+import IconPersonFill from '../components/icons/IconPersonFill';
+import Recorder from '../components/recorder'
+import { AuthServie, request } from '../lib/APIServices';
+import Swal from 'sweetalert2';
+import { snakeCase } from 'change-case'
 
 export default function Home() {
     const [checkAuth, setCheckAuth] = useState(false)
@@ -15,6 +18,7 @@ export default function Home() {
     const onRecordingComplete = (blob, inx) => {
         records[inx] = blob
         setRecords([...records])
+        console.log(blob);
     }
     const onRecordingError = (err, inx) => {
         console.log({ err, inx })
@@ -33,13 +37,34 @@ export default function Home() {
             <div>Please Wait</div>
         )
     }
+
+    const onSubmit = () => {
+        if (records.filter(f => !f).length) {
+            Swal.fire('Sorry!', 'All audio recorders are required.', 'error')
+            return
+        }
+        const formData = new FormData();
+        records.map((record, inx) => {
+            const audioFile = new File([record], `${snakeCase(userDetails.name)}-${snakeCase(teamMembers[inx].name)}.mp3`, {
+                type: record.type
+            })
+            formData.append('audios[]', audioFile)
+        })
+        // formData.append('team', )
+        request.post('/test/' + userDetails.team, formData, {
+            onUploadProgress: progressEvent => console.log(progressEvent.loaded)
+        }).then(res => {
+            console.log(res)
+        })
+    }
+
     return (
         <section className="py-5 my-5">
             <Container>
                 <Row>
                     <Col sm={{ size: 8, offset: 2 }}>
                         <p><b>Note: </b> Hold mic icon and record</p>
-                        <Card body>
+                        <Card body className="mb-3">
                             <ListGroup flush>
                                 {teamMembers.map((item, inx) => {
                                     return (
@@ -66,6 +91,9 @@ export default function Home() {
                                 })}
                             </ListGroup>
                         </Card>
+                        <div className="text-center">
+                            <Button color="primary" size="lg" className="px-5" onClick={onSubmit}>Submit</Button>
+                        </div>
                     </Col>
                 </Row>
             </Container>
