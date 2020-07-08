@@ -43,20 +43,24 @@ export default function Home() {
                             <ListGroup flush>
                                 {teamMembers.map((item, inx) => {
                                     return (
-                                        <ListGroupItem key={inx}>
-                                            <IconPersonFill />
-                                            {item.name}
-                                            <Recorder
-                                                onRecordingComplete={blob => onRecordingComplete(blob,inx)}
-                                                onRecordingError={onRecordingError}
-                                            />
-                                            {records[inx] && (
-                                                <audio
-                                                    src={URL.createObjectURL(records[inx])}
-                                                    controls
-                                                    preload="metadata"
+                                        <ListGroupItem className="d-flex align-items-center justify-content-between" key={inx}>
+                                            <div className="d-flex align-items-center">
+                                                <IconPersonFill className="mr-2" />
+                                                {item.name}
+                                            </div>
+                                            <div className="d-flex align-items-center" >
+                                                {records[inx] && (
+                                                    <audio
+                                                        src={URL.createObjectURL(records[inx])}
+                                                        controls
+                                                        preload="metadata"
+                                                    />
+                                                )}
+                                                <Recorder
+                                                    onRecordingComplete={blob => onRecordingComplete(blob, inx)}
+                                                    onRecordingError={onRecordingError}
                                                 />
-                                            )}
+                                            </div>
                                         </ListGroupItem>
                                     )
                                 })}
