@@ -2,7 +2,7 @@
   "name": "lead-like-jesus",
   "version": "1.0.0",
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "node server.js",
     "build": "next build",
     "start": "cross-env NODE_ENV=production node server.js"
   },
