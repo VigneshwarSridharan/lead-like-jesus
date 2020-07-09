@@ -7,6 +7,7 @@
     "start": "cross-env NODE_ENV=production node server.js"
   },
   "dependencies": {
+    "@now/node": "^1.7.1",
     "@zeit/next-sass": "^1.0.1",
     "axios": "^0.19.2",
     "bootstrap-icons": "^1.0.0-alpha5",
