@@ -11,7 +11,8 @@ import { snakeCase } from 'change-case'
 export default function Home() {
     const [checkAuth, setCheckAuth] = useState(false)
     const userDetails = JSON.parse(localStorage.getItem('user-details') || '{}')
-    const teamMembers = JSON.parse(localStorage.getItem('team-members') || '[]')
+    const teamMembersData = JSON.parse(localStorage.getItem('team-members') || '[]')
+    let [teamMembers, setTeamMembers] = useState(teamMembersData)
     const router = useRouter()
     const [records, setRecords] = useState(teamMembers.map(i => null))
 
@@ -51,10 +52,31 @@ export default function Home() {
             formData.append('audios[]', audioFile)
         })
         // formData.append('team', )
-        request.post('/test/' + userDetails.team, formData, {
+        request.post(`/submit/${userDetails.team}/${snakeCase(userDetails.name)}`, formData, {
             onUploadProgress: progressEvent => console.log(progressEvent.loaded)
         }).then(res => {
             console.log(res)
+            teamMembers = teamMembers.map((item, inx) => {
+                let { destination, originalname } = res.files[inx];
+                destination = destination.replace('./public', '');
+                return ({
+                    ...item,
+                    audioURL: destination + originalname
+                })
+            })
+            setTeamMembers([...teamMembers])
+            window.localStorage.setItem('team-members', JSON.stringify(teamMembers))
+            Swal.fire(
+                'Success!',
+                'Upload Successfully',
+                'success'
+            )
+        }).catch(err => {
+            Swal.fire(
+                'Sorry!',
+                'Upload Faild',
+                'error'
+            )
         })
     }
 
@@ -63,37 +85,55 @@ export default function Home() {
             <Container>
                 <Row>
                     <Col sm={{ size: 8, offset: 2 }}>
-                        <p><b>Note: </b> Hold mic icon and record</p>
+                        <p><b>Note: </b> Hi, {userDetails.name} you are in {userDetails.team}, and they are your team members.</p>
                         <Card body className="mb-3">
                             <ListGroup flush>
                                 {teamMembers.map((item, inx) => {
+                                    let url = null;
+                                    if (item.audioURL) {
+                                        url = item.audioURL
+                                    }
+                                    else if (records[inx]) {
+                                        url = URL.createObjectURL(records[inx]);
+                                    }
+
                                     return (
                                         <ListGroupItem className="d-flex align-items-center justify-content-between" key={inx}>
                                             <div className="d-flex align-items-center">
+                                                <span className="mr-2">{inx + 1}</span>
                                                 <IconPersonFill className="mr-2" />
                                                 {item.name}
                                             </div>
                                             <div className="d-flex align-items-center" >
-                                                {records[inx] && (
+                                                {url && (
                                                     <audio
-                                                        src={URL.createObjectURL(records[inx])}
+                                                        src={url}
                                                         controls
                                                         preload="metadata"
                                                     />
                                                 )}
-                                                <Recorder
-                                                    onRecordingComplete={blob => onRecordingComplete(blob, inx)}
-                                                    onRecordingError={onRecordingError}
-                                                />
+                                                {
+                                                    !item.audioURL && (
+                                                        <Recorder
+                                                            onRecordingComplete={blob => onRecordingComplete(blob, inx)}
+                                                            onRecordingError={onRecordingError}
+                                                        />
+                                                    )
+                                                }
                                             </div>
                                         </ListGroupItem>
                                     )
                                 })}
                             </ListGroup>
                         </Card>
-                        <div className="text-center">
-                            <Button color="primary" size="lg" className="px-5" onClick={onSubmit}>Submit</Button>
-                        </div>
+                        {
+                            teamMembers && teamMembers[0] && !teamMembers[0].audioURL && (
+                                <div className="text-center">
+                                    <Button color="primary" size="lg" className="px-5" onClick={onSubmit}>Submit</Button>
+                                </div>
+                            )
+                        }
+
                     </Col>
                 </Row>
             </Container>
