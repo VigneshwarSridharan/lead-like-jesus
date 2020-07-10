@@ -63,9 +63,9 @@ router.get('/login/:id', (req, res) => {
 
 router.post('/submit/:team/:user', upload.array('audios[]'), (req, res) => {
 
-    makeAudioMerge((err, result) => {
-        res.json({ files: req.files })
-    })
+    res.json({ files: req.files })
+    // makeAudioMerge((err, result) => {
+    // })
     // var file = JSON.parse(JSON.stringify(req.files))
 })
 
