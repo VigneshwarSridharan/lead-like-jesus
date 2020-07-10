@@ -37,7 +37,7 @@ router.get('/login/:id', (req, res) => {
     }, [])
 
     // return res.send(jsonData)
-    const userDetails = jsonData.find(f => f.id == id);
+    const userDetails = jsonData.find(f => f.id.toLowerCase() == id.toLowerCase());
 
     var result = {}
     if (userDetails) {

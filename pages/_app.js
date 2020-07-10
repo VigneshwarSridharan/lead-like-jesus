@@ -1,4 +1,4 @@
-// import Layout from "./components/layout";
+import Head from 'next/head';
 import "../static/assets/scss/app.scss";
 import { useEffect, useState } from "react";
 import Navigation from "../components/Navigation";
@@ -27,6 +27,9 @@ const App = ({ Component, pageProps, router }) => {
 
     return (
         <React.Fragment>
+            <Head>
+                <title>Lead Like Jesus</title>
+            </Head>
             <Navigation />
             <Component {...pageProps} />
         </React.Fragment>
