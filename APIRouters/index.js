@@ -4,6 +4,7 @@ const fs = require('fs')
 const XLSX = require('xlsx');
 const multer = require('multer')
 const async = require('async');
+const archiver = require('archiver');
 const { snakeCase } = require('change-case')
 
 const storage = multer.diskStorage({
@@ -153,11 +154,39 @@ function makeAudioMerge(callback) {
     )
 }
 
+function makeZip(input, output, callback) {
+
+    var output = fs.createWriteStream(output);
+    var archive = archiver('zip');
+
+    output.on('close', function () {
+        console.log(archive.pointer() + ' total bytes');
+        console.log('archiver has been finalized and the output file descriptor has closed.');
+        callback(null, 'Zip Done')
+    });
+
+    archive.on('error', function (err) {
+        throw err;
+    });
+
+    archive.pipe(output);
+
+    // append files from a sub-directory and naming it `new-subdir` within the archive (see docs for more options):
+    archive.directory(input, false);
+    archive.finalize();
+
+}
+
 router.get('/merge', (req, res) => {
 
     makeAudioMerge((err, result) => {
+        let zipSource = './public/events/10-07-2020/merged'
+        let zipDist = './public/events/10-07-2020/merged.zip'
+        makeZip(zipSource, zipDist, (err,status) => {
+            res.download(zipDist)
+        } )
 
-        res.json(result)
+        // res.json(result)
     });
 
     // var files = fs.readdirSync('./public/events/10-07-2020/record-source/Team-B/brittani_bilt')

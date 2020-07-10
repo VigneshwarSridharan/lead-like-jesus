@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Container, Row, Col, Card, ListGroup, ListGroupItem, Button } from 'reactstrap';
+import { Container, Row, Col, Card, ListGroup, ListGroupItem, Button, Alert } from 'reactstrap';
 import IconPersonFill from '../components/icons/IconPersonFill';
 import Recorder from '../components/recorder'
 import { AuthServie, request } from '../lib/APIServices';
@@ -84,8 +84,16 @@ export default function Home() {
         <section className="py-5 my-5">
             <Container>
                 <Row>
-                    <Col sm={{ size: 8, offset: 2 }}>
-                        <p><b>Note: </b> Hi, {userDetails.name} you are in {userDetails.team}, and they are your team members.</p>
+                    <Col xl={{ size: 8, offset: 2 }}>
+                        {
+                            teamMembers && teamMembers[0] && teamMembers[0].audioURL && (
+                                    <Alert color="success">
+                                        <h4 className="alert-heading">Well done {userDetails.name}!</h4>
+                                        <p>Thanks for submiting your audio, Please close the tab </p>
+                                    </Alert>
+                                )
+                        }
+                        <h6 className="mb-3"> Hi, {userDetails.name} you are in <b className="">{userDetails.team}</b>, and they are your team members.</h6>
                         <Card body className="mb-3">
                             <ListGroup flush>
                                 {teamMembers.map((item, inx) => {
@@ -98,9 +106,8 @@ export default function Home() {
                                     }
 
                                     return (
-                                        <ListGroupItem className="d-flex align-items-center justify-content-between" key={inx}>
+                                        <ListGroupItem className={`d-flex align-items-center justify-content-between flex-column flex-md-row`} key={inx}>
                                             <div className="d-flex align-items-center">
-                                                <span className="mr-2">{inx + 1}</span>
                                                 <IconPersonFill className="mr-2" />
                                                 {item.name}
                                             </div>
