@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Navigation from "../components/Navigation";
 
 
+
 const App = ({ Component, pageProps, router }) => {
     const [checkAuth, setCheckAuth] = useState(false)
     useEffect(() => {
@@ -29,6 +30,7 @@ const App = ({ Component, pageProps, router }) => {
         <React.Fragment>
             <Head>
                 <title>Lead Like Jesus</title>
+                <link href="/static/assets/css/all.css" rel="stylesheet" />
             </Head>
             <Navigation />
             <Component {...pageProps} />
