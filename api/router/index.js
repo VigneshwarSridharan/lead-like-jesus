@@ -29,7 +29,7 @@ const router = express.Router();
 router.get('/login/:id', (req, res) => {
     const { id } = req.params;
 
-    const workbook = XLSX.readFile(path.join(__dirname, '../public/events/10-07-2020/name-list/sheet.xlsx'));
+    const workbook = XLSX.readFile(path.join(__dirname, '../../public/events/10-07-2020/name-list/sheet.xlsx'));
     const sheet_name_list = workbook.SheetNames;
     const jsonData = sheet_name_list.reduce((total, item) => {
         total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]

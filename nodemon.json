@@ -3,7 +3,7 @@
     "ignore": ["node_modules", ".next"],
     "watch": [
       "server.js",
-      "./APIRouters"
+      "./api"
     ],
     "ext": "js json"
   }
