@@ -1050,8 +1050,10 @@ var Recorder$1 = function (_Component) {
           recorderParams = _props.recorderParams,
           onRecordingComplete = _props.onRecordingComplete,
           onRecordingError = _props.onRecordingError,
+          _props$onRecordingSta = _props.onRecordingStart,
+          onRecordingStart = _props$onRecordingSta === undefined ? function () {} : _props$onRecordingSta,
           className = _props.className,
-          rest = objectWithoutProperties(_props, ['recorderParams', 'onRecordingComplete', 'onRecordingError', 'className']);
+          rest = objectWithoutProperties(_props, ['recorderParams', 'onRecordingComplete', 'onRecordingError', 'onRecordingStart', 'className']);
 
 
       return React__default.createElement(
@@ -1067,6 +1069,7 @@ var Recorder$1 = function (_Component) {
             // onMouseUp={this._onMouseUp}
             , onClick: function onClick() {
               if (!_this2.state.isStart) {
+                onRecordingStart();
                 _this2.setState({ isStart: true });
                 _this2._onMouseDown();
               } else {

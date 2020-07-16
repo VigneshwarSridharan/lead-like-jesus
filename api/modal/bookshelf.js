@@ -13,17 +13,27 @@ const bookshelf = require('bookshelf')(knex)
 const User = bookshelf.model('User', {
     tableName: 'users',
     role() {
-        return this.morphOne('Role','id')
+        return this.hasOne('Role', 'id')
     }
 })
+
 const Role = bookshelf.model('Role', {
     tableName: 'roles',
 })
+
 const Temp = bookshelf.model('Temp', {
     tableName: 'temps'
+})
+
+const Event = bookshelf.model('Event', {
+    tableName: 'events',
+    user() {
+        return this.hasOne('User', 'id')
+    }
 })
 module.exports = {
     User,
     Role,
-    Temp
+    Temp,
+    Event
 };

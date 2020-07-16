@@ -6,18 +6,23 @@ const multer = require('multer')
 const async = require('async');
 const archiver = require('archiver');
 const { snakeCase } = require('change-case')
+const { Event } = require('../modal/bookshelf');
+const { parseResponse } = require('../util');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const { team, user } = req.params
-        const dir = `./public/events/10-07-2020/record-source/${team}/${user}/`
-        // fs.exists(dir, exist => {
-        //     if (!exist) {
-        //         return fs.mkdir(dir, error => cb(error, dir))
-        //     }
-        // })
-        fs.mkdirSync(dir, { recursive: true });
-        return cb(null, dir)
+        Event.where({ is_active: 1 }).fetch().then(event => {
+
+            const { team, user, recordType } = req.params
+            const dir = `./public/events/${event.id}/record-source/${team}/${user}/${recordType}`
+            // fs.exists(dir, exist => {
+            //     if (!exist) {
+            //         return fs.mkdir(dir, error => cb(error, dir))
+            //     }
+            // })
+            fs.mkdirSync(dir, { recursive: true });
+            return cb(null, dir)
+        })
     },
     filename: (req, file, cb) => {
         cb(null, file.originalname)
@@ -29,39 +34,65 @@ const router = express.Router();
 router.get('/login/:id', (req, res) => {
     const { id } = req.params;
 
-    const workbook = XLSX.readFile(path.join(__dirname, '../../public/events/10-07-2020/name-list/sheet.xlsx'));
-    const sheet_name_list = workbook.SheetNames;
-    const jsonData = sheet_name_list.reduce((total, item) => {
-        total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]
-        return total
-    }, [])
+    Event.where({ is_active: 1 }).fetch().then(event => {
+        const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${event.id}/name-list/sheet.xlsx`));
+        const sheet_name_list = workbook.SheetNames;
+        const jsonData = sheet_name_list.reduce((total, item) => {
+            total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]
+            return total
+        }, [])
 
-    // return res.send(jsonData)
-    const userDetails = jsonData.find(f => f.id.toLowerCase() == id.toLowerCase());
+        // return res.send(jsonData)
+        const userDetails = jsonData.find(f => f.id.toLowerCase() == id.toLowerCase());
 
-    var result = {}
-    if (userDetails) {
-        const teamMembers = jsonData.filter(item => item.team == userDetails.team && item.id != id)
-        result = {
-            status: 'success',
-            data: {
-                userDetails,
-                teamMembers
+        var result = {}
+        if (userDetails) {
+            let teamMembers = jsonData.filter(item => item.team == userDetails.team && item.id.toLowerCase() != id.toLowerCase())
+            const genericUrl = `./public/events/${event.id}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/generic`;
+            const scriptureUrl = `./public/events/${event.id}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/scripture`;
+            let genericList = [];
+            let scriptureList = [];
+            if (fs.existsSync(genericUrl)) {
+                genericList = fs.readdirSync(genericUrl)
+            }
+            if (fs.existsSync(scriptureUrl)) {
+                scriptureList = fs.readdirSync(scriptureUrl)
+            }
+
+            teamMembers = teamMembers.map(item => {
+                let generic = genericList.find(f => f.includes(snakeCase(item.name))) || '';
+                let scripture = scriptureList.find(f => f.includes(snakeCase(item.name))) || '';
+                if (generic) {
+                    generic = `/events/${event.id}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/generic/${generic}`
+                }
+                if (scripture) {
+                    scripture = `/events/${event.id}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/scripture/${scripture}`
+                }
+                return { ...item, generic, scripture };
+            })
+
+            result = {
+                status: 'success',
+                data: {
+                    userDetails,
+                    teamMembers
+                }
             }
         }
-    }
-    else {
-        result = {
-            status: 'error',
-            message: 'User not found'
+        else {
+            result = {
+                status: 'error',
+                message: 'User not found'
+            }
         }
-    }
 
-    res.send(result);
+        res.send(result);
+    })
+
 
 })
 
-router.post('/submit/:team/:user', upload.array('audios[]'), (req, res) => {
+router.post('/submit/:team/:user/:recordType', upload.array('audios[]'), (req, res) => {
 
     res.json({ files: req.files })
     // makeAudioMerge((err, result) => {
@@ -98,11 +129,11 @@ function mergeAudio(list, output, callback) {
     main();
 }
 
-function makeAudioMerge(callback) {
-    var basePath1 = './public/events/10-07-2020/record-source'
+function makeAudioMerge(event, callback) {
+    var basePath1 = `./public/events/${event.id}/record-source`
     var teams = fs.readdirSync(basePath1);
 
-    const workbook = XLSX.readFile(path.join(__dirname, '../public/events/10-07-2020/name-list/sheet.xlsx'));
+    const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${event.id}/name-list/sheet.xlsx`));
     const sheet_name_list = workbook.SheetNames;
     const jsonData = sheet_name_list.reduce((total, item) => {
         total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]
@@ -110,35 +141,43 @@ function makeAudioMerge(callback) {
     }, [])
 
     let result = [];
-    teams.map(team => {
-        let members = fs.readdirSync(basePath1 + '/' + team);
-        let nameList = jsonData.filter(f => f.team == team);
-        nameList.map(nameItem => {
 
-            let tempFiles = [];
+    ['generic', 'scripture'].map(type => {
 
-            members.map(member => {
-                let files = fs.readdirSync(basePath1 + '/' + team + '/' + member)
+        teams.map(team => {
+            let members = fs.readdirSync(basePath1 + '/' + team);
+            let nameList = jsonData.filter(f => f.team == team);
+            nameList.map(nameItem => {
 
-                if (files.includes(member + '-' + snakeCase(nameItem.name) + '.mp3')) {
-                    tempFiles.push(
-                        basePath1 + '/' + team + '/' + member + '/' + member + '-' + snakeCase(nameItem.name) + '.mp3'
-                    )
-                    tempFiles.push(
-                        './public/tones/chime.mp3'
-                    )
+                let tempFiles = [];
+                members.map(member => {
+                    if (!fs.existsSync(basePath1 + '/' + team + '/' + member + '/' + type)) return
+                    let files = fs.readdirSync(basePath1 + '/' + team + '/' + member + '/' + type)
+
+                    if (files.includes(member + '-' + snakeCase(nameItem.name) + '.mp3')) {
+                        tempFiles.push(
+                            basePath1 + '/' + team + '/' + member + '/' + type + '/' + member + '-' + snakeCase(nameItem.name) + '.mp3'
+                        )
+                        tempFiles.push(
+                            './public/tones/chime.mp3'
+                        )
+                    }
+                })
+                let output = `./public/events/${event.id}/merged/${team}/${type}`
+                fs.mkdirSync(output, { recursive: true });
+
+                if(tempFiles.length) {
+                    tempFiles.pop();
+                    result.push({
+                        files: tempFiles,
+                        output: output + '/' + snakeCase(nameItem.name) + '.mp3'
+                    })
                 }
             })
-            let output = './public/events/10-07-2020/merged/' + team
-            fs.mkdirSync(output, { recursive: true });
-
-            tempFiles.pop();
-            result.push({
-                files: tempFiles,
-                output: output + '/' + snakeCase(nameItem.name) + '.mp3'
-            })
         })
+
     })
+
 
 
     async.series(
@@ -178,16 +217,19 @@ function makeZip(input, output, callback) {
 }
 
 router.get('/merge', (req, res) => {
+    Event.where({ is_active: 1 }).fetch().then(event => {
 
-    makeAudioMerge((err, result) => {
-        let zipSource = './public/events/10-07-2020/merged'
-        let zipDist = './public/events/10-07-2020/merged.zip'
-        makeZip(zipSource, zipDist, (err,status) => {
-            res.download(zipDist)
-        } )
+        makeAudioMerge(event, (err, result) => {
+            let zipSource = `./public/events/${event.id}/merged`
+            let zipDist = `./public/events/${event.id}/merged.zip`
+            // makeZip(zipSource, zipDist, (err, status) => {
+            //     res.download(zipDist)
+            // })
 
-        // res.json(result)
-    });
+            res.json(result)
+        });
+    })
+
 
     // var files = fs.readdirSync('./public/events/10-07-2020/record-source/Team-B/brittani_bilt')
     // var output = './brittani_bilt-merge.mp3';

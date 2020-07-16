@@ -13,11 +13,13 @@ export default function Home() {
     const userDetails = JSON.parse(localStorage.getItem('user-details') || '{}')
     const teamMembersData = JSON.parse(localStorage.getItem('team-members') || '[]')
     let [teamMembers, setTeamMembers] = useState(teamMembersData)
+    const [recordType, setRecordType] = useState('');
     const router = useRouter()
-    const [records, setRecords] = useState(teamMembers.map(i => null))
+    const [records, setRecords] = useState(teamMembers.map(i => ({ generic: null, scripture: null })))
 
     const onRecordingComplete = (blob, inx) => {
-        records[inx] = blob
+        console.timeEnd('record-' + inx)
+        records[inx][recordType] = blob
         setRecords([...records])
         console.log(blob);
     }
@@ -40,19 +42,19 @@ export default function Home() {
     }
 
     const onSubmit = () => {
-        if (records.filter(f => !f).length) {
-            Swal.fire('Sorry!', 'All audio recorders are required.', 'error')
+        if (records.filter(f => !f[recordType]).length) {
+            Swal.fire('Sorry!', 'All ' + recordType + ' audio recorders are required.', 'error')
             return
         }
         const formData = new FormData();
         records.map((record, inx) => {
-            const audioFile = new File([record], `${snakeCase(userDetails.name)}-${snakeCase(teamMembers[inx].name)}.mp3`, {
-                type: record.type
+            const audioFile = new File([record[recordType]], `${snakeCase(userDetails.name)}-${snakeCase(teamMembers[inx].name)}.mp3`, {
+                type: record[recordType].type
             })
             formData.append('audios[]', audioFile)
         })
         // formData.append('team', )
-        request.post(`/submit/${userDetails.team}/${snakeCase(userDetails.name)}`, formData, {
+        request.post(`/submit/${userDetails.team}/${snakeCase(userDetails.name)}/${recordType}`, formData, {
             onUploadProgress: progressEvent => console.log(progressEvent.loaded)
         }).then(res => {
             console.log(res)
@@ -61,7 +63,7 @@ export default function Home() {
                 destination = destination.replace('./public', '');
                 return ({
                     ...item,
-                    audioURL: destination + originalname
+                    [recordType]: `${destination}/${originalname}`
                 })
             })
             setTeamMembers([...teamMembers])
@@ -85,58 +87,74 @@ export default function Home() {
             <Container>
                 <Row>
                     <Col xl={{ size: 8, offset: 2 }}>
-                        {
-                            teamMembers && teamMembers[0] && teamMembers[0].audioURL && (
-                                    <Alert color="success">
-                                        <h4 className="alert-heading">Well done {userDetails.name}!</h4>
-                                        <p>Thanks for submiting your audio, Please close the tab </p>
-                                    </Alert>
-                                )
-                        }
                         <h6 className="mb-3"> Hi, {userDetails.name} you are in <b className="">{userDetails.team}</b>, and they are your team members.</h6>
-                        <Card body className="mb-3">
-                            <ListGroup flush>
-                                {teamMembers.map((item, inx) => {
-                                    let url = null;
-                                    if (item.audioURL) {
-                                        url = item.audioURL
-                                    }
-                                    else if (records[inx]) {
-                                        url = URL.createObjectURL(records[inx]);
+                        <div className="record-type">
+
+                            {['generic', 'scripture'].map((item, inx) => {
+                                return (
+                                    <div className={`item ${recordType === item ? 'active' : ''}`} onClick={() => setRecordType(item)} key={inx}>
+                                        <div className="icon"><i className="fas fa-microphone"></i></div>
+                                        <div >{item}</div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        {
+                            recordType != '' && (
+                                <div>
+
+                                    {
+                                        false && (
+                                            <Alert color="success">
+                                                <h4 className="alert-heading">Well done {userDetails.name}!</h4>
+                                                <p>Thanks for submiting your audio, Please close the tab </p>
+                                            </Alert>
+                                        )
                                     }
 
-                                    return (
-                                        <ListGroupItem className={`d-flex align-items-center justify-content-between flex-column flex-md-row`} key={inx}>
-                                            <div className="d-flex align-items-center">
-                                                <IconPersonFill className="mr-2" />
-                                                {item.name}
-                                            </div>
-                                            <div className="d-flex align-items-center" >
-                                                {url && (
-                                                    <audio
-                                                        src={url}
-                                                        controls
-                                                        preload="metadata"
-                                                    />
-                                                )}
-                                                {
-                                                    !item.audioURL && (
-                                                        <Recorder
-                                                            onRecordingComplete={blob => onRecordingComplete(blob, inx)}
-                                                            onRecordingError={onRecordingError}
-                                                        />
-                                                    )
+                                    <Card body className="mb-3">
+                                        <ListGroup flush>
+                                            {teamMembers.map((item, inx) => {
+                                                let url = null;
+                                                if (item[recordType]) {
+                                                    url = item[recordType]
                                                 }
-                                            </div>
-                                        </ListGroupItem>
-                                    )
-                                })}
-                            </ListGroup>
-                        </Card>
-                        {
-                            teamMembers && teamMembers[0] && !teamMembers[0].audioURL && (
-                                <div className="text-center">
-                                    <Button color="primary" size="lg" className="px-5" onClick={onSubmit}>Submit</Button>
+                                                else if (records[inx][recordType]) {
+                                                    url = URL.createObjectURL(records[inx][recordType]);
+                                                }
+
+                                                return (
+                                                    <ListGroupItem className={`d-flex align-items-center justify-content-between flex-column flex-md-row`} key={inx}>
+                                                        <div className="d-flex align-items-center">
+                                                            <IconPersonFill className="mr-2" />
+                                                            {item.name}
+                                                        </div>
+                                                        <div className="d-flex align-items-center" >
+                                                            {url && (
+                                                                <audio
+                                                                    src={url}
+                                                                    controls
+                                                                    preload="metadata"
+                                                                />
+                                                            )}
+                                                            {
+                                                                !item[recordType] && (
+                                                                    <Recorder
+                                                                        onRecordingStart={() => console.time('record-' + inx)}
+                                                                        onRecordingComplete={blob => onRecordingComplete(blob, inx)}
+                                                                        onRecordingError={onRecordingError}
+                                                                    />
+                                                                )
+                                                            }
+                                                        </div>
+                                                    </ListGroupItem>
+                                                )
+                                            })}
+                                        </ListGroup>
+                                    </Card>
+                                    <div className="text-center">
+                                        <Button color="primary" size="lg" className="px-5" onClick={onSubmit}>Submit</Button>
+                                    </div>
                                 </div>
                             )
                         }
