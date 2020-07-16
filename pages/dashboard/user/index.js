@@ -1,14 +1,14 @@
 import { useEffect } from "react"
 import { AuthServie } from "../../../lib/APIServices"
-import { Container, Row, Col, Card, FormGroup, Label, Input, Button, Form, Table } from "reactstrap"
+import { Container, Row, Col, Card, FormGroup, Label, Input, Button, Form, Table, CustomInput, Badge } from "reactstrap"
 import moment from "moment"
-import {useRouter} from 'next/router'
+import { useRouter } from 'next/router'
 import Axios from "axios"
 import { API_URL } from "../../../lib/constants"
 
 const TableList = (props) => {
     const router = useRouter()
-    console.log(props)
+    // const [active, setActive] = useState(true)
     let tableData = props.response.data;
     useEffect(() => {  //mounted
 
@@ -19,7 +19,7 @@ const TableList = (props) => {
                 <Row>
                     <Col sm={{ size: 12 }}>
                         <div className="text-right">
-                            <Button className="my-3" color="success" onClick={()=>{router.push('/dashboard/user/adduser')}}>Add User</Button>
+                            <Button className="my-3" color="success" onClick={() => { router.push('/dashboard/user/adduser') }}>Add User</Button>
                         </div>
                         <Table striped>
                             <thead>
@@ -29,6 +29,7 @@ const TableList = (props) => {
                                     <th>Password</th>
                                     <th>Role</th>
                                     <th>Created On</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -40,6 +41,16 @@ const TableList = (props) => {
                                             <td>{item.password}</td>
                                             <td>{item.role}</td>
                                             <td>{moment(item.created_at).format('MMMM Do YYYY, h:mm:ss a')}</td>
+                                            <td>
+                                                <div>
+                                                    {item.active ? (
+                                                        <Badge href="#" color="primary">Active</Badge>
+                                                    ) : (
+                                                            <Badge href="#" color="danger">InActive</Badge>
+                                                        )}
+                                                </div>
+                                            </td>
+                                            
                                         </tr>
                                     )
                                 })}
@@ -57,7 +68,7 @@ export async function getServerSideProps(context) {
     response = response.data
     return {
         props: {
-           response
+            response
         }, // will be passed to the page component as props
     }
 }

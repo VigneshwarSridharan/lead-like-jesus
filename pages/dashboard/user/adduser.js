@@ -1,4 +1,4 @@
-import { Container, Row, Col, Card, FormGroup, Label, Input, Button, Form } from "reactstrap"
+import { Container, Row, Col, Card, FormGroup, Label, Input, Button, Form, CustomInput } from "reactstrap"
 import { useState } from "react"
 import { request } from "../../../lib/APIServices"
 import Swal from 'sweetalert2'
@@ -9,11 +9,11 @@ const addUser = (props) => {
     const [username, setUsername] = useState(props.username || "");
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('1');
+    const [active, setActive] = useState(true)
 
     const addUser = (e) => {
         e.preventDefault();
-        // console.log(username,password,role)
-        let params = { "username": username, "password": password, "role": role }
+        let params = { "username": username, "password": password, "role": role, "active": active }
         request.post('/auth/adduser', params).then(res => {
             if (res.status) {
                 Swal.fire(
@@ -53,6 +53,12 @@ const addUser = (props) => {
                                         <option value="4">4</option>
                                         <option value="5">5</option>
                                     </Input>
+                                </FormGroup>
+                                <FormGroup>
+                                    <Label>Active</Label>
+                                    <div>
+                                        <CustomInput type="switch" name="activeuser" id="exampleCustomSwitch" checked={active} onChange={({ target }) => setActive(target.checked)} />
+                                    </div>
                                 </FormGroup>
                                 <Button color="primary" block>Create</Button>
                             </Form>
