@@ -10,16 +10,17 @@ import Swal from "sweetalert2"
 const Eventlist = (props) => {
     const router = useRouter()
     console.log(props)
-    let [tableData, setTableData] = useState(props.response.data)
+    let { events, activeEvent } = props.response.data
+    let [tableData, setTableData] = useState(events)
     useEffect(() => {  //mounted
 
     }, [])
-    const editUser = (id) => {
+    const editEvent = (id) => {
         router.push('/dashboard/events/' + id);
     }
-    const deleteUser = (id) => {
-        request.delete('/event/event/' + id).then(res => {
-            if (res.status) {
+    const deleteEvent = (id) => {
+        request.delete('/event/' + id).then(res => {
+            if (res.status == 1) {
                 Swal.fire(
                     'Success!',
                     'Added Successfully',
@@ -32,12 +33,12 @@ const Eventlist = (props) => {
         })
     }
     return (
-        <section className="py-5">
-            <Container>
+        <section className="py-3">
+            <Container fluid>
                 <Row>
                     <Col sm={{ size: 12 }}>
                         <div className="text-right">
-                            <Button className="my-3" color="success" onClick={() => { router.push('/dashboard/events/addevents') }}>Add Event</Button>
+                            <Button className="my-3" color="success" onClick={() => { router.push('/dashboard/events/addevents') }}><i className="fas fa-microphone ml-2"></i> Add Event</Button>
                         </div>
                         <Table striped>
                             <thead>
@@ -46,20 +47,24 @@ const Eventlist = (props) => {
                                     <th>Event Name</th>
                                     <th>File name</th>
                                     <th>Created On</th>
+                                    <th>Status</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {tableData.map((item, inx) => {
                                     return (
-                                        <tr>
+                                        <tr key={inx}>
                                             <td>{item.id}</td>
                                             <td>{item.name}</td>
-                                            <td>{item.file}</td>
+                                            <td>{(() => {
+                                                let name = item.file.split('/').pop()
+                                                return <a href={item.file} download>{name}</a>
+                                            })()}</td>
                                             <td>{moment(item.created_at).format('MMMM Do YYYY, h:mm:ss a')}</td>
                                             <td>
                                                 <div>
-                                                    {item.is_active ? (
+                                                    {item.id == activeEvent.value ? (
                                                         <Badge href="#" color="primary">Active</Badge>
                                                     ) : (
                                                             <Badge href="#" color="danger">InActive</Badge>
@@ -67,14 +72,12 @@ const Eventlist = (props) => {
                                                 </div>
                                             </td>
                                             <td>
-                                                <h6 className="btn" onClick={() => editUser(item.id)}>
-                                                    <i class="fas fa-user-edit"></i>
-                                                </h6>
-                                            </td>
-                                            <td>
-                                                <h6 className="btn" onClick={() => deleteUser(item.id)}>
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </h6>
+                                                <Button color="primary" size="sm" className="p-1 pl-2 ml-2" onClick={() => editEvent(item.id)} title={`Edit ${item.name}`}>
+                                                    <i className="fas fa-edit"></i>
+                                                </Button>
+                                                <Button color="danger" size="sm" className="p-1 px-2 ml-2" onClick={() => deleteEvent(item.id)} title={`Delete ${item.name}`}>
+                                                    <i className="fas fa-trash-alt"></i>
+                                                </Button>
                                             </td>
                                         </tr>
                                     )

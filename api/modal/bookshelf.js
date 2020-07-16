@@ -31,9 +31,14 @@ const Event = bookshelf.model('Event', {
         return this.hasOne('User', 'id')
     }
 })
+
+const Config = bookshelf.model('Config', {
+    tableName: 'configs',
+})
 module.exports = {
     User,
     Role,
     Temp,
-    Event
+    Event,
+    Config
 };

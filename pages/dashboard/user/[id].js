@@ -31,8 +31,8 @@ const EditUser = (props) => {
 
     }
     return (
-        <section className="py-5">
-            <Container>
+        <section className="py-3">
+            <Container fluid>
                 <Row>
                     <Col sm={{ size: 8, offset: 2 }}>
                         <Card className="border-0 my-5" body>

@@ -23,14 +23,14 @@ const Navigation = (props) => {
                         name ?
                             (
                                 <React.Fragment>
-                                    <NavbarText className="mr-3"> <IconPersonFill className="" /> {name}</NavbarText>
-                                    {/* <NavbarText style={{cursor:'pointer'}} onClick={() => {
+                                    <NavbarText className="mr-3"> <i className="fas fa-user"></i> {name}</NavbarText>
+                                    <NavbarText style={{cursor:'pointer'}} onClick={() => {
                                         window.localStorage.clear()
                                         router.replace('/login')
-                                    }}> Logout</NavbarText> */}
+                                    }}> Logout</NavbarText>
                                 </React.Fragment>
                             ) : (
-                                <NavbarText> <IconPersonFill className="" /> Login</NavbarText>
+                                <NavbarText> <i className="fas fa-user"></i> Login</NavbarText>
                             )
                     }
                 </div>

@@ -82,6 +82,15 @@ export default function Home() {
         })
     }
 
+    let isSubmitted = { generic: false, scripture: false }
+    let [firstMembers] = teamMembers
+    if(firstMembers.generic) {
+        isSubmitted['generic'] = true
+    }
+    if(firstMembers.scripture) {
+        isSubmitted['scripture'] = true
+    }
+
     return (
         <section className="py-5 my-5">
             <Container>
@@ -107,7 +116,7 @@ export default function Home() {
                                         false && (
                                             <Alert color="success">
                                                 <h4 className="alert-heading">Well done {userDetails.name}!</h4>
-                                                <p>Thanks for submiting your audio, Please close the tab </p>
+                                                <p>Thanks for submiting your audio of {recordType}, Please close the tab </p>
                                             </Alert>
                                         )
                                     }

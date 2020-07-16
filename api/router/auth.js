@@ -4,7 +4,18 @@ const { parseResponse } = require('../util')
 const router = express.Router();
 
 router.post('/login', (req, res) => {
-    res.send('fgfdg')
+    User.collection().fetchOne({ username: req.username }).then(result => {
+        result = result.toJSON();
+        if (req.body.password == result.password) {
+            delete result.password;
+            parseResponse(res, null, result)
+        }
+        else{
+            parseResponse(res, 'Invalid Password')
+        }
+    }).catch(err => {
+        parseResponse(res, 'Invalid username and Password')
+    })
 })
 
 router.get('/test', (req, res) => {

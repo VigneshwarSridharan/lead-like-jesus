@@ -1,0 +1,17 @@
+.dashboard-wrapper {
+    display: flex;
+    height: 100vh;
+    .sidebar {
+        max-width: 250px;
+        background-color: #ffffff;
+        height: 100%;
+        flex-grow: 1;
+        flex: 1;
+    }
+    .content-wrapper {
+        flex: 1;
+        .content {
+    
+        }
+    }
+}

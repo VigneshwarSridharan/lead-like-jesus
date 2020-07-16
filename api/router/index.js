@@ -6,20 +6,18 @@ const multer = require('multer')
 const async = require('async');
 const archiver = require('archiver');
 const { snakeCase } = require('change-case')
-const { Event } = require('../modal/bookshelf');
+const { Event, Config } = require('../modal/bookshelf');
 const { parseResponse } = require('../util');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        Event.where({ is_active: 1 }).fetch().then(event => {
+        Config.collection().fetchOne({ name: "active_event" }).then(activeEvent => {
+            activeEvent = activeEvent.toJSON()
+
 
             const { team, user, recordType } = req.params
-            const dir = `./public/events/${event.id}/record-source/${team}/${user}/${recordType}`
-            // fs.exists(dir, exist => {
-            //     if (!exist) {
-            //         return fs.mkdir(dir, error => cb(error, dir))
-            //     }
-            // })
+            const dir = `./public/events/${activeEvent.value}/record-source/${team}/${user}/${recordType}`
+
             fs.mkdirSync(dir, { recursive: true });
             return cb(null, dir)
         })
@@ -34,8 +32,9 @@ const router = express.Router();
 router.get('/login/:id', (req, res) => {
     const { id } = req.params;
 
-    Event.where({ is_active: 1 }).fetch().then(event => {
-        const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${event.id}/name-list/sheet.xlsx`));
+    Config.collection().fetchOne({ name: "active_event" }).then(activeEvent => {
+        activeEvent = activeEvent.toJSON()
+        const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${activeEvent.value}/name-list/sheet.xlsx`));
         const sheet_name_list = workbook.SheetNames;
         const jsonData = sheet_name_list.reduce((total, item) => {
             total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]
@@ -48,8 +47,8 @@ router.get('/login/:id', (req, res) => {
         var result = {}
         if (userDetails) {
             let teamMembers = jsonData.filter(item => item.team == userDetails.team && item.id.toLowerCase() != id.toLowerCase())
-            const genericUrl = `./public/events/${event.id}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/generic`;
-            const scriptureUrl = `./public/events/${event.id}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/scripture`;
+            const genericUrl = `./public/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/generic`;
+            const scriptureUrl = `./public/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/scripture`;
             let genericList = [];
             let scriptureList = [];
             if (fs.existsSync(genericUrl)) {
@@ -63,10 +62,10 @@ router.get('/login/:id', (req, res) => {
                 let generic = genericList.find(f => f.includes(snakeCase(item.name))) || '';
                 let scripture = scriptureList.find(f => f.includes(snakeCase(item.name))) || '';
                 if (generic) {
-                    generic = `/events/${event.id}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/generic/${generic}`
+                    generic = `/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/generic/${generic}`
                 }
                 if (scripture) {
-                    scripture = `/events/${event.id}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/scripture/${scripture}`
+                    scripture = `/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/scripture/${scripture}`
                 }
                 return { ...item, generic, scripture };
             })
@@ -129,11 +128,11 @@ function mergeAudio(list, output, callback) {
     main();
 }
 
-function makeAudioMerge(event, callback) {
-    var basePath1 = `./public/events/${event.id}/record-source`
+function makeAudioMerge(activeEvent, callback) {
+    var basePath1 = `./public/events/${activeEvent.value}/record-source`
     var teams = fs.readdirSync(basePath1);
 
-    const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${event.id}/name-list/sheet.xlsx`));
+    const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${activeEvent.value}/name-list/sheet.xlsx`));
     const sheet_name_list = workbook.SheetNames;
     const jsonData = sheet_name_list.reduce((total, item) => {
         total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]
@@ -163,10 +162,10 @@ function makeAudioMerge(event, callback) {
                         )
                     }
                 })
-                let output = `./public/events/${event.id}/merged/${team}/${type}`
+                let output = `./public/events/${activeEvent.value}/merged/${team}/${type}`
                 fs.mkdirSync(output, { recursive: true });
 
-                if(tempFiles.length) {
+                if (tempFiles.length) {
                     tempFiles.pop();
                     result.push({
                         files: tempFiles,
@@ -217,16 +216,17 @@ function makeZip(input, output, callback) {
 }
 
 router.get('/merge', (req, res) => {
-    Event.where({ is_active: 1 }).fetch().then(event => {
+    Config.collection().fetchOne({ name: "active_event" }).then(activeEvent => {
+        activeEvent = activeEvent.toJSON()
 
-        makeAudioMerge(event, (err, result) => {
-            let zipSource = `./public/events/${event.id}/merged`
-            let zipDist = `./public/events/${event.id}/merged.zip`
-            // makeZip(zipSource, zipDist, (err, status) => {
-            //     res.download(zipDist)
-            // })
+        makeAudioMerge(activeEvent, (err, result) => {
+            let zipSource = `./public/events/${activeEvent.value}/merged`
+            let zipDist = `./public/events/${activeEvent.value}/merged.zip`
+            makeZip(zipSource, zipDist, (err, status) => {
+                res.download(zipDist)
+            })
 
-            res.json(result)
+            // res.json(result)
         });
     })
 

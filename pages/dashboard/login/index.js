@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { Container, Row, Col, Card, FormGroup, Label, Input, Button, Form } from "reactstrap"
 import IconBoxArrowRight from "../../../components/icons/IconBoxArrowRight"
 import { useState } from "react"
-import { AuthServie } from "../../../lib/APIServices"
+import { DashboardServices } from "../../../lib/APIServices"
 import Swal from 'sweetalert2'
 
 const Login = () => {
@@ -13,11 +13,10 @@ const Login = () => {
 
     const handleLogin = (e) => {
         e.preventDefault();
-        AuthServie.login(username).then(res => {
-            if (res.status == "success") {
-                localStorage.setItem('user-details', JSON.stringify(res.data.userDetails))
-                localStorage.setItem('team-members', JSON.stringify(res.data.teamMembers))
-                router.replace('/')
+        DashboardServices.login(username, password).then(res => {
+            if (res.status == "1") {
+                localStorage.setItem('dashboard-details', JSON.stringify(res.data))
+                router.replace('/dashboard')
             }
             else {
                 Swal.fire(
