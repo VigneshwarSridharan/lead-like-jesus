@@ -6,12 +6,12 @@ const APIRouters = require('./api/router')
 const AuthRouters = require('./api/router/auth')
 const EventRouters = require('./api/router/event')
 
-const port = parseInt(process.env.PORT, 10) || 3100
+const port = parseInt(process.env.PORT, 10) || 8080
 const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev })
 const handle = app.getRequestHandler()
 
-// app.prepare().then(() => {
+app.prepare().then(() => {
   const server = express()
   server.use(cors())
   server.use(bodyParser.json());
@@ -38,4 +38,4 @@ const handle = app.getRequestHandler()
     if (err) throw err
     console.log(`> Ready on http://localhost:${port}`)
   })
-// })
+})
