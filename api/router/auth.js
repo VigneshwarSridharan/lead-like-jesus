@@ -36,4 +36,30 @@ router.get('/userlist', (req, res) => {
         parseResponse(res, err)
     })
 })
+router.get('/user/:id', (req, res) => {
+    User.where({ id: req.params.id }).fetch({ debug: true }).then(user => {
+        parseResponse(res, null, user)
+    }).catch(err => {
+        parseResponse(res, err)
+    })
+})
+
+router.post('/user/:id', (req, res) => {
+    User.forge({ id: req.params.id }).save({ ...req.body }).then(user => {
+        parseResponse(res, null, user)
+    }).catch(err => {
+        parseResponse(res, err)
+    })
+})
+
+router.delete('/user/:id', (req, res) => {
+    new User({ id: req.params.id }).destroy().then(user => {
+        parseResponse(res, null, user)
+    }).catch(err => {
+        parseResponse(res, err)
+    })
+
+})
+
+
 module.exports = router
