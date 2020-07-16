@@ -1,0 +1,47 @@
+
+.record-type {
+    display: flex;
+    background-color: #ffffff;
+    border-radius: $border-radius ;
+    border: solid 1px $border-color;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    .item {
+        flex: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: capitalize;
+        padding: 1rem;
+        border-left: solid 1px $border-color;
+        position: relative;
+        transition: .5s ease;
+        z-index: 1;
+        &:after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 0px;
+            background-color: $primary;
+            transition: .5s ease;
+            bottom: 0;
+            z-index: 10;
+        }
+        
+        &:first-child {
+            border: none;
+        }
+        .icon {
+            margin-right: .75rem;
+        }
+        &.active, &:hover {
+            // background-color: $primary;
+            color: $primary;
+            &:after {
+                height: 3px;
+            }
+        }
+    }
+}
