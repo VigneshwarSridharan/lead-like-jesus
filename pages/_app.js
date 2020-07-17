@@ -22,11 +22,6 @@ const App = ({ Component, pageProps, router }) => {
             router.push('/login')
         }
         setCheckAuth(true);
-        window.oncontextmenu = function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            return false;
-        };
     }, [])
 
     if (!checkAuth) {

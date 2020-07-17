@@ -35,56 +35,58 @@ const TableList = (props) => {
     return (
         <section className="py-3">
             <Container fluid>
-                <Row>
-                    <Col sm={{ size: 12 }}>
-                        <div className="text-right">
-                            <Button className="my-3" color="success" onClick={() => { router.push('/dashboard/user/adduser') }}><i className="fas fa-user ml-2"></i> Add User</Button>
-                        </div>
-                        <Table striped>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Username</th>
-                                    <th>Password</th>
-                                    <th>Role</th>
-                                    <th>Created On</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tableData.map((item, inx) => {
-                                    return (
-                                        <tr key={inx}>
-                                            <td>{item.id}</td>
-                                            <td>{item.username}</td>
-                                            <td>{item.password}</td>
-                                            <td>{item.role}</td>
-                                            <td>{moment(item.created_at).format('MMMM Do YYYY, h:mm:ss a')}</td>
-                                            <td>
-                                                <div>
-                                                    {item.active ? (
-                                                        <Badge href="#" color="primary">Active</Badge>
-                                                    ) : (
-                                                            <Badge href="#" color="danger">InActive</Badge>
-                                                        )}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <Button color="primary" size="sm" className="p-1 px-2 ml-2" onClick={() => editUser(item.id)} title={`Edit ${item.username}`}>
-                                                    <i className="fas fa-user-edit"></i>
-                                                </Button>
-                                                <Button color="danger" size="sm" className="p-1 px-2 ml-2" onClick={() => deleteUser(item.id)} title={`Delete ${item.username}`}>
-                                                    <i className="fas fa-trash-alt"></i>
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </Table>
-                    </Col>
-                </Row>
+                <Card body>
+                    <Row>
+                        <Col sm={{ size: 12 }}>
+                            <div className="text-right">
+                                <Button className="my-3" color="success" onClick={() => { router.push('/dashboard/user/adduser') }}><i className="fas fa-user ml-2"></i> Add User</Button>
+                            </div>
+                            <Table striped>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Username</th>
+                                        <th>Password</th>
+                                        <th>Role</th>
+                                        <th>Created On</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {tableData.map((item, inx) => {
+                                        return (
+                                            <tr key={inx}>
+                                                <td>{item.id}</td>
+                                                <td>{item.username}</td>
+                                                <td>{item.password}</td>
+                                                <td>{item.role}</td>
+                                                <td>{moment(item.created_at).format('MMMM Do YYYY, h:mm:ss a')}</td>
+                                                <td>
+                                                    <div>
+                                                        {item.active ? (
+                                                            <Badge href="#" color="primary">Active</Badge>
+                                                        ) : (
+                                                                <Badge href="#" color="danger">InActive</Badge>
+                                                            )}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <Button color="primary" size="sm" className="p-1 px-2 ml-2" onClick={() => editUser(item.id)} title={`Edit ${item.username}`}>
+                                                        <i className="fas fa-user-edit"></i>
+                                                    </Button>
+                                                    <Button color="danger" size="sm" className="p-1 px-2 ml-2" onClick={() => deleteUser(item.id)} title={`Delete ${item.username}`}>
+                                                        <i className="fas fa-trash-alt"></i>
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </Table>
+                        </Col>
+                    </Row>
+                </Card>
             </Container>
         </section>
     )

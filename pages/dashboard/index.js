@@ -1,13 +1,15 @@
-import { Container } from "reactstrap";
+import { Container, Card } from "reactstrap";
 import { API_URL } from "../../lib/constants";
 
 const Dashboard = (props) => {
     return (
         <section className="py-5">
             <Container fluid>
-                <h3>Dashboard</h3>
+                <Card body>
+                    <h3>Dashboard</h3>
 
-                <a href={`${API_URL}/merge`} >Download Merge</a>
+                    <a href={`${API_URL}/merge`} >Download Merge</a>
+                </Card>
             </Container>
 
         </section>

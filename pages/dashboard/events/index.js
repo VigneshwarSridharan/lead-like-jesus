@@ -35,57 +35,59 @@ const Eventlist = (props) => {
     return (
         <section className="py-3">
             <Container fluid>
-                <Row>
-                    <Col sm={{ size: 12 }}>
-                        <div className="text-right">
-                            <Button className="my-3" color="success" onClick={() => { router.push('/dashboard/events/addevents') }}><i className="fas fa-microphone ml-2"></i> Add Event</Button>
-                        </div>
-                        <Table striped>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Event Name</th>
-                                    <th>File name</th>
-                                    <th>Created On</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tableData.map((item, inx) => {
-                                    return (
-                                        <tr key={inx}>
-                                            <td>{item.id}</td>
-                                            <td>{item.name}</td>
-                                            <td>{(() => {
-                                                let name = item.file.split('/').pop()
-                                                return <a href={item.file} download>{name}</a>
-                                            })()}</td>
-                                            <td>{moment(item.created_at).format('MMMM Do YYYY, h:mm:ss a')}</td>
-                                            <td>
-                                                <div>
-                                                    {item.id == activeEvent.value ? (
-                                                        <Badge href="#" color="primary">Active</Badge>
-                                                    ) : (
-                                                            <Badge href="#" color="danger">InActive</Badge>
-                                                        )}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <Button color="primary" size="sm" className="p-1 pl-2 ml-2" onClick={() => editEvent(item.id)} title={`Edit ${item.name}`}>
-                                                    <i className="fas fa-edit"></i>
-                                                </Button>
-                                                <Button color="danger" size="sm" className="p-1 px-2 ml-2" onClick={() => deleteEvent(item.id)} title={`Delete ${item.name}`}>
-                                                    <i className="fas fa-trash-alt"></i>
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </Table>
-                    </Col>
-                </Row>
+                <Card body>
+                    <Row>
+                        <Col sm={{ size: 12 }}>
+                            <div className="text-right">
+                                <Button className="my-3" color="success" onClick={() => { router.push('/dashboard/events/addevents') }}><i className="fas fa-microphone ml-2"></i> Add Event</Button>
+                            </div>
+                            <Table striped>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Event Name</th>
+                                        <th>File name</th>
+                                        <th>Created On</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {tableData.map((item, inx) => {
+                                        return (
+                                            <tr key={inx}>
+                                                <td>{item.id}</td>
+                                                <td>{item.name}</td>
+                                                <td>{(() => {
+                                                    let name = item.file.split('/').pop()
+                                                    return <a href={item.file} download>{name}</a>
+                                                })()}</td>
+                                                <td>{moment(item.created_at).format('MMMM Do YYYY, h:mm:ss a')}</td>
+                                                <td>
+                                                    <div>
+                                                        {item.id == activeEvent.value ? (
+                                                            <Badge href="#" color="primary">Active</Badge>
+                                                        ) : (
+                                                                <Badge href="#" color="danger">InActive</Badge>
+                                                            )}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <Button color="primary" size="sm" className="p-1 pl-2 ml-2" onClick={() => editEvent(item.id)} title={`Edit ${item.name}`}>
+                                                        <i className="fas fa-edit"></i>
+                                                    </Button>
+                                                    <Button color="danger" size="sm" className="p-1 px-2 ml-2" onClick={() => deleteEvent(item.id)} title={`Delete ${item.name}`}>
+                                                        <i className="fas fa-trash-alt"></i>
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </Table>
+                        </Col>
+                    </Row>
+                </Card>
             </Container>
         </section>
     )
