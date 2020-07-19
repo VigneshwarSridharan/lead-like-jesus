@@ -75,7 +75,7 @@ router.post('/addevent', (req, res) => {     //insert data
 })
 
 router.get('/:id', (req, res) => {    //edit data
-    Event.where({ id: req.params.id }).fetch({ debug: true }).then(event => {
+    Event.where({ id: req.params.id }).fetch().then(event => {
         Config.where({ name: "active_event" }).fetch().then(activeEvent => {
             parseResponse(res, null, { event, activeEvent })
 

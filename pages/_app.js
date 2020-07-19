@@ -3,9 +3,7 @@ import "../static/assets/scss/app.scss";
 import { useEffect, useState } from "react";
 import Navigation from "../components/Navigation";
 import DashboardNavigation from "../components/dashboard/Navigation";
-import Sidebar from '../components/dashboard/Sideboar';
-
-
+import Sidebar from '../components/dashboard/sidebar';
 
 const App = ({ Component, pageProps, router }) => {
     const [checkAuth, setCheckAuth] = useState(false)

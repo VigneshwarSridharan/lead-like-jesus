@@ -20,7 +20,7 @@ const Eventlist = (props) => {
     }
     const deleteEvent = (id) => {
         request.delete('/event/' + id).then(res => {
-            if (res.status == 1) {
+            if (res.status) {
                 Swal.fire(
                     'Success!',
                     'Added Successfully',
@@ -46,7 +46,8 @@ const Eventlist = (props) => {
                                     <tr>
                                         <th>#</th>
                                         <th>Event Name</th>
-                                        <th>File name</th>
+                                        <th>File Name</th>
+                                        <th>Merged Audio</th>
                                         <th>Created On</th>
                                         <th>Status</th>
                                         <th>Action</th>
@@ -62,6 +63,7 @@ const Eventlist = (props) => {
                                                     let name = item.file.split('/').pop()
                                                     return <a href={item.file} download>{name}</a>
                                                 })()}</td>
+                                                <td><a href={`${API_URL}/merge/${item.id}`}><i className="fas fa-download"></i></a></td>
                                                 <td>{moment(item.created_at).format('MMMM Do YYYY, h:mm:ss a')}</td>
                                                 <td>
                                                     <div>

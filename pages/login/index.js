@@ -5,14 +5,15 @@ import { useState } from "react"
 import { AuthServie } from "../../lib/APIServices"
 import Swal from 'sweetalert2'
 
-const Login = () => {
+
+const Login = (props) => {
 
     const [username, setUername] = useState('');
     const router = useRouter()
 
     const handleLogin = (e) => {
         e.preventDefault();
-        AuthServie.login(username).then(res => {
+        AuthServie.login(username.trim().toLowerCase()).then(res => {
             if (res.status == "success") {
                 localStorage.setItem('user-details', JSON.stringify(res.data.userDetails))
                 localStorage.setItem('team-members', JSON.stringify(res.data.teamMembers))
@@ -48,6 +49,14 @@ const Login = () => {
             </Container>
         </section>
     )
+}
+
+export function getServerSideProps(context) {
+    return {
+        props: {
+            name: process.env.APP_NAME
+        }
+    }
 }
 
 export default Login

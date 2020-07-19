@@ -1,26 +1,32 @@
 const express = require('express');
+const CryptoJS = require('crypto-js');
 const { User } = require('../modal/bookshelf')
 const { parseResponse } = require('../util')
+const { createJWToken } = require('../jwt')
 const router = express.Router();
 
 router.post('/login', (req, res) => {
-    User.collection().fetchOne({ username: req.username }).then(result => {
+    User.where({ username: req.body.username }).fetch().then(result => {
         result = result.toJSON();
-        if (req.body.password == result.password) {
+        let password = CryptoJS.SHA256(req.body.password).toString()
+        if (password == result.password) {
             delete result.password;
-            parseResponse(res, null, result)
+            delete result.created_at;
+            delete result.updated_at;
+            let token = createJWToken(result)
+            parseResponse(res, null, { ...result, token })
         }
-        else{
+        else {
             parseResponse(res, 'Invalid Password')
         }
     }).catch(err => {
-        parseResponse(res, 'Invalid username and Password')
+        parseResponse(res, 'Invalid username and Password', err)
     })
 })
 
 router.get('/test', (req, res) => {
 
-    User.collection().fetch({ debug: true }).then(user => {
+    User.collection().fetch().then(user => {
         res.send(user)
     })
     // User.forge({
@@ -35,20 +41,21 @@ router.get('/test', (req, res) => {
 router.post('/adduser', (req, res) => {
     User.forge(req.body).save().then(result => {
         // res.json({status})
+        req.body.password = CryptoJS.SHA256(req.body.password).toString();
         parseResponse(res, null, result)
     }).catch(err => {
         parseResponse(res, err)
     })
 })
 router.get('/userlist', (req, res) => {
-    User.fetchAll({ debug: true }).then(users => {
+    User.fetchAll().then(users => {
         parseResponse(res, null, users)
     }).catch(err => {
         parseResponse(res, err)
     })
 })
 router.get('/user/:id', (req, res) => {
-    User.where({ id: req.params.id }).fetch({ debug: true }).then(user => {
+    User.where({ id: req.params.id }).fetch().then(user => {
         parseResponse(res, null, user)
     }).catch(err => {
         parseResponse(res, err)
@@ -56,7 +63,11 @@ router.get('/user/:id', (req, res) => {
 })
 
 router.post('/user/:id', (req, res) => {
-    User.forge({ id: req.params.id }).save({ ...req.body }).then(user => {
+    if(req.body.password) {
+        req.body.password = CryptoJS.SHA256(req.body.password).toString()
+    }
+    if(req.body.password=="") delete req.body.password
+    User.where({ id: req.params.id }).save({ ...req.body },{ method: 'update', patch: true }).then(user => {
         parseResponse(res, null, user)
     }).catch(err => {
         parseResponse(res, err)

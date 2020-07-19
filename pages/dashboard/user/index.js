@@ -38,15 +38,17 @@ const TableList = (props) => {
                 <Card body>
                     <Row>
                         <Col sm={{ size: 12 }}>
-                            <div className="text-right">
-                                <Button className="my-3" color="success" onClick={() => { router.push('/dashboard/user/adduser') }}><i className="fas fa-user ml-2"></i> Add User</Button>
+                            <div className="d-flex align-items-start justify-content-between mb-3">
+                                <h3>Users</h3>
+                                <div className="text-right">
+                                    <Button color="success" onClick={() => { router.push('/dashboard/user/adduser') }}><i className="fas fa-user ml-2"></i> Add User</Button>
+                                </div>
                             </div>
                             <Table striped>
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Username</th>
-                                        <th>Password</th>
                                         <th>Role</th>
                                         <th>Created On</th>
                                         <th>Status</th>
@@ -59,7 +61,6 @@ const TableList = (props) => {
                                             <tr key={inx}>
                                                 <td>{item.id}</td>
                                                 <td>{item.username}</td>
-                                                <td>{item.password}</td>
                                                 <td>{item.role}</td>
                                                 <td>{moment(item.created_at).format('MMMM Do YYYY, h:mm:ss a')}</td>
                                                 <td>

@@ -13,9 +13,12 @@ const Login = () => {
 
     const handleLogin = (e) => {
         e.preventDefault();
-        DashboardServices.login(username, password).then(res => {
-            if (res.status == "1") {
+        DashboardServices.login(username.trim(), password.trim()).then(res => {
+            if (res.status) {
+                let token = res.data.token;
+                delete res.data.token;
                 localStorage.setItem('dashboard-details', JSON.stringify(res.data))
+                localStorage.setItem('token', token)
                 router.replace('/dashboard')
             }
             else {

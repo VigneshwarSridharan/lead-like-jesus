@@ -3,7 +3,7 @@ let {parseResponse} = require('./util');
 
 let SHA = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'
 
-let createJWToken = (data = "") => {
+let createJWToken = (data = {}) => {
     let iat = new Date().getTime();
     let hours = 1;
     let exp = iat + (1000 * 60 * 60) * hours;
@@ -20,8 +20,8 @@ let verifyJWTToken = (req, res, next) => {
             if (err) return parseResponse(res,err, 'Unexpected token');
 
             if ('exp' in decode && decode.exp - new Date().getTime() > 0) {
-                let { user_id } = decode;
-                req.user_id = user_id;
+                let { id } = decode;
+                req.user_id = id;
                 next()
             }
             else {
@@ -30,7 +30,7 @@ let verifyJWTToken = (req, res, next) => {
         });
     }
     else {
-        parseResponse(res,true, 'Token missing');
+        parseResponse(res,'Token missing');
     }
 }
 

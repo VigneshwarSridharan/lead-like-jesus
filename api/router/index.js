@@ -215,20 +215,25 @@ function makeZip(input, output, callback) {
 
 }
 
-router.get('/merge', (req, res) => {
-    Config.collection().fetchOne({ name: "active_event" }).then(activeEvent => {
-        activeEvent = activeEvent.toJSON()
+router.get('/merge/:id', (req, res) => {
+    if (fs.existsSync(`./public/events/${req.params.id}/record-source`)) {
+        // Config.collection().fetchOne({ name: "active_event" }).then(activeEvent => {
+            let activeEvent = {value:req.params.id}
 
-        makeAudioMerge(activeEvent, (err, result) => {
-            let zipSource = `./public/events/${activeEvent.value}/merged`
-            let zipDist = `./public/events/${activeEvent.value}/merged.zip`
-            makeZip(zipSource, zipDist, (err, status) => {
-                res.download(zipDist)
-            })
+            makeAudioMerge(activeEvent, (err, result) => {
+                let zipSource = `./public/events/${activeEvent.value}/merged`
+                let zipDist = `./public/events/${activeEvent.value}/merged.zip`
+                makeZip(zipSource, zipDist, (err, status) => {
+                    res.download(zipDist)
+                })
 
-            // res.json(result)
-        });
-    })
+                // res.json(result)
+            });
+        // })
+    }
+    else {
+        res.send('<center><h1>Record Source Not Found</h1></center>')
+    }
 
 
     // var files = fs.readdirSync('./public/events/10-07-2020/record-source/Team-B/brittani_bilt')

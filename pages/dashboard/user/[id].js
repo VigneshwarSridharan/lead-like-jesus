@@ -16,8 +16,8 @@ const EditUser = (props) => {
 
     const addUser = (e) => {
         e.preventDefault();
-        let params = { "username": username, "password": password, "role": role, "active": active }
-        request.post('/auth/user/'+props.id, params).then(res => {
+        let params = { "username": username, "password": password, "role": role, "active": active ? 1 : 0 }
+        request.post('/auth/user/' + props.id, params).then(res => {
             if (res.status) {
                 Swal.fire(
                     'Success!',
@@ -44,7 +44,7 @@ const EditUser = (props) => {
                                 </FormGroup>
                                 <FormGroup>
                                     <Label>Enter Password</Label>
-                                    <Input type="password" required value={password} onChange={({ target }) => setPassword(target.value)} />
+                                    <Input type="password" value={password} onChange={({ target }) => setPassword(target.value)} />
                                 </FormGroup>
                                 <FormGroup>
                                     <Label>Select Role</Label>
@@ -77,10 +77,11 @@ const EditUser = (props) => {
 export async function getServerSideProps(context) {
     let response = await Axios.get(`${API_URL}/auth/user/` + context.params.id)
     response = response.data
+    delete response.data.password
     return {
         props: {
             response,
-            "id":context.params.id
+            "id": context.params.id
         }, // will be passed to the page component as props
     }
 }
