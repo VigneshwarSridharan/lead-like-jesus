@@ -46,6 +46,13 @@ export default function Home() {
         else {
             setCheckAuth(true);
         }
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function (stream) {
+                alert('You let me use your mic!')
+            })
+            .catch(function (err) {
+                alert('No mic for you!')
+            });
     }, [userDetails]);
 
     if (!checkAuth) {
@@ -154,7 +161,7 @@ export default function Home() {
                                                         <div className="d-flex align-items-center" >
                                                             {
                                                                 activeRecord === inx && (
-                                                                    <div className="m-0 mr-3 h3 timer">
+                                                                    <div className="m-0 mr-3 h3 timer text-nowrap">
                                                                         <Timer />
                                                                     </div>
                                                                 )

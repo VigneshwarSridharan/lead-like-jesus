@@ -8,6 +8,7 @@ const archiver = require('archiver');
 const { snakeCase } = require('change-case')
 const { Event, Config } = require('../modal/bookshelf');
 const { parseResponse } = require('../util');
+const audioconcat = require('audioconcat');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -100,6 +101,25 @@ router.post('/submit/:team/:user/:recordType', upload.array('audios[]'), (req, r
 })
 
 function mergeAudio(list, output, callback) {
+
+    audioconcat(list)
+        .concat(output)
+        .on('start', function (command) {
+            console.log('ffmpeg process started:', command);
+        })
+        .on('error', function (err, stdout, stderr) {
+            console.error('Error:', err)
+            console.error('ffmpeg stderr:', stderr);
+        })
+        .on('end', function (output) {
+            console.error('Audio created in:', output);
+            setTimeout(() => {
+                
+                callback(null,'done')
+            }, 500);
+        });
+
+    return
     let files = list,
         clips = [],
         stream,
@@ -114,7 +134,9 @@ function mergeAudio(list, output, callback) {
     function main() {
         if (!clips.length) {
             dhh.end("Done");
-            callback(null, 'Done')
+            setTimeout(() => {
+                callback(null, 'Done')
+            }, 100);
             return;
         }
         currentfile = clips.shift();
@@ -143,7 +165,7 @@ function makeAudioMerge(activeEvent, callback) {
 
     ['generic', 'scripture'].map(type => {
 
-        teams.map(team => {
+        teams.map((team, inx) => {
             let members = fs.readdirSync(basePath1 + '/' + team);
             let nameList = jsonData.filter(f => f.team == team);
             nameList.map(nameItem => {
@@ -157,16 +179,16 @@ function makeAudioMerge(activeEvent, callback) {
                         tempFiles.push(
                             basePath1 + '/' + team + '/' + member + '/' + type + '/' + member + '-' + snakeCase(nameItem.name) + '.mp3'
                         )
-                        tempFiles.push(
-                            './public/tones/chime.mp3'
-                        )
+                        // tempFiles.push(
+                        //     './public/tones/chime.mp3'
+                        // )
                     }
                 })
                 let output = `./public/events/${activeEvent.value}/merged/${team}/${type}`
                 fs.mkdirSync(output, { recursive: true });
 
                 if (tempFiles.length) {
-                    tempFiles.pop();
+                    // tempFiles.pop();
                     result.push({
                         files: tempFiles,
                         output: output + '/' + snakeCase(nameItem.name) + '.mp3'
@@ -177,7 +199,7 @@ function makeAudioMerge(activeEvent, callback) {
 
     })
 
-
+    // result.splice(1);
 
     async.series(
         result.map(item => function (callback) {
@@ -218,17 +240,17 @@ function makeZip(input, output, callback) {
 router.get('/merge/:id', (req, res) => {
     if (fs.existsSync(`./public/events/${req.params.id}/record-source`)) {
         // Config.collection().fetchOne({ name: "active_event" }).then(activeEvent => {
-            let activeEvent = {value:req.params.id}
+        let activeEvent = { value: req.params.id }
 
-            makeAudioMerge(activeEvent, (err, result) => {
-                let zipSource = `./public/events/${activeEvent.value}/merged`
-                let zipDist = `./public/events/${activeEvent.value}/merged.zip`
-                makeZip(zipSource, zipDist, (err, status) => {
-                    res.download(zipDist)
-                })
+        makeAudioMerge(activeEvent, (err, result) => {
+            let zipSource = `./public/events/${activeEvent.value}/merged`
+            let zipDist = `./public/events/${activeEvent.value}/merged.zip`
+            makeZip(zipSource, zipDist, (err, status) => {
+                res.download(zipDist)
+            })
 
-                // res.json(result)
-            });
+            // res.json(result)
+        });
         // })
     }
     else {
