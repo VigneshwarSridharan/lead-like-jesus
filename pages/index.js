@@ -18,6 +18,7 @@ export default function Home() {
     const router = useRouter()
     const [records, setRecords] = useState(teamMembers.map(i => ({ generic: null, scripture: null })))
     const [activeRecord, setActiveRecord] = useState(null)
+    const [permisstion, setPermisstion] = useState(true)
 
     const onRecordingStart = (inx) => {
         setActiveRecord(inx)
@@ -46,14 +47,17 @@ export default function Home() {
         else {
             setCheckAuth(true);
         }
+    }, [userDetails]);
+
+    useEffect(() => {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(function (stream) {
-                alert('You let me use your mic!')
+                console.log('You let me use your mic!')
             })
             .catch(function (err) {
                 alert('No mic for you!')
             });
-    }, [userDetails]);
+    }, [])
 
     if (!checkAuth) {
         return (
@@ -109,6 +113,18 @@ export default function Home() {
     }
     if (firstMembers.scripture) {
         isSubmitted['scripture'] = true
+    }
+
+    if (!permisstion) {
+        return (
+            <section className="py-5 my-5">
+                <Container>
+                    <Card body className="text-center">
+                        Please give microphone access to record the voice
+                    </Card>
+                </Container>
+            </section>
+        )
     }
 
     return (
