@@ -55,7 +55,7 @@ export default function Home() {
                 console.log('You let me use your mic!')
             })
             .catch(function (err) {
-                alert('No mic for you!')
+                setPermisstion(false)
             });
     }, [])
 
@@ -119,8 +119,8 @@ export default function Home() {
         return (
             <section className="py-5 my-5">
                 <Container>
-                    <Card body className="text-center">
-                        Please give microphone access to record the voice
+                    <Card body className="text-center bg-danger border-danger text-white">
+                        <i className="fas fa-microphone"></i> Please give microphone access to record the voice
                     </Card>
                 </Container>
             </section>
