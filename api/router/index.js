@@ -179,16 +179,16 @@ function makeAudioMerge(activeEvent, callback) {
                         tempFiles.push(
                             basePath1 + '/' + team + '/' + member + '/' + type + '/' + member + '-' + snakeCase(nameItem.name) + '.mp3'
                         )
-                        // tempFiles.push(
-                        //     './public/tones/chime.mp3'
-                        // )
+                        tempFiles.push(
+                            './public/tones/chime.mp3'
+                        )
                     }
                 })
                 let output = `./public/events/${activeEvent.value}/merged/${team}/${type}`
                 fs.mkdirSync(output, { recursive: true });
 
                 if (tempFiles.length) {
-                    // tempFiles.pop();
+                    tempFiles.pop();
                     result.push({
                         files: tempFiles,
                         output: output + '/' + snakeCase(nameItem.name) + '.mp3'

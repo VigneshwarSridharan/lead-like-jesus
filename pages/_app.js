@@ -1,12 +1,10 @@
 import Head from 'next/head';
 import "../static/assets/scss/app.scss";
 import { useEffect, useState } from "react";
-import * as Sentry from '@sentry/react';
 import Navigation from "../components/Navigation";
 import DashboardNavigation from "../components/dashboard/Navigation";
 import Sidebar from '../components/dashboard/sidebar';
-
-Sentry.init({dsn: "https://36241f220e6b4c6dbae5e3fc4d729912@o384713.ingest.sentry.io/5356076"});
+import ErrorHandler from '../components/ErrorHandler';
 
 const App = ({ Component, pageProps, router }) => {
     const [checkAuth, setCheckAuth] = useState(false)
@@ -33,7 +31,7 @@ const App = ({ Component, pageProps, router }) => {
 
     if (router.pathname.startsWith('/dashboard') && !router.pathname.startsWith('/dashboard/login')) {
         return (
-            <React.Fragment>
+            <ErrorHandler>
                 <Head>
                     <title>Lead Like Jesus</title>
                     <link href="/static/assets/css/all.css" rel="stylesheet" />
@@ -47,19 +45,19 @@ const App = ({ Component, pageProps, router }) => {
                         </div>
                     </div>
                 </div>
-            </React.Fragment>
+            </ErrorHandler>
         )
     }
 
     return (
-        <React.Fragment>
+        <ErrorHandler>
             <Head>
                 <title>Lead Like Jesus</title>
                 <link href="/static/assets/css/all.css" rel="stylesheet" />
             </Head>
             <Navigation />
             <Component {...pageProps} />
-        </React.Fragment>
+        </ErrorHandler>
     )
 }
 
