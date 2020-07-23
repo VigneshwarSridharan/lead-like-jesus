@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@now/node": "^1.7.1",
+    "@sentry/react": "^5.20.0",
     "@zeit/next-sass": "^1.0.1",
     "archiver": "^4.0.2",
     "async": "^3.2.0",
