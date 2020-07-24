@@ -113,10 +113,10 @@ function mergeAudio(list, output, callback) {
         })
         .on('end', function (output) {
             console.error('Audio created in:', output);
-            setTimeout(() => {
+            // setTimeout(() => {
                 
                 callback(null,'done')
-            }, 500);
+            // }, 500);
         });
 
     return
