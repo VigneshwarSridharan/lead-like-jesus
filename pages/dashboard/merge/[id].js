@@ -5,7 +5,7 @@ import { Card, Container, Col, Row } from 'reactstrap'
 
 const Merge = props => {
     console.log(props)
-    const [result, setResult] = useState([])
+    const [result, setResult] = useState(["<p>Please Wait...</p>"])
     const { id } = props.router.query
     useEffect(() => {
         if (typeof (EventSource) !== "undefined") {

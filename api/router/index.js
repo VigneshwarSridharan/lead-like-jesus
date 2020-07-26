@@ -291,7 +291,6 @@ router.get('/merge/:id', (req, res) => {
     //     }
     // }, 1000);
 
-    res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Please Wait...</p>` })}\n\n`)
     if (fs.existsSync(`./public/events/${req.params.id}/record-source`)) {
         // Config.collection().fetchOne({ name: "active_event" }).then(activeEvent => {
         let activeEvent = { value: req.params.id }
