@@ -2,6 +2,7 @@ import { Container, Card, Row, Col, Table, Button, Nav, NavItem, NavLink, TabPan
 import { API_URL } from "../../lib/constants";
 import { useEffect, useState } from "react";
 import Axios from "axios";
+import Link from 'next/link';
 
 const Dashboard = (props) => {
     console.log(props)
@@ -58,7 +59,9 @@ const Dashboard = (props) => {
                 <Card body>
                     <div className="d-flex align-items-start justify-content-between mb-3">
                         <h3>Active Event Details ({activeEvent.name})</h3>
-                        <Button tag="a" color="success" href={`${API_URL}/merge/${activeEvent.id}`}><i className="fas fa-download mr-2"></i>Download Merged Audio</Button>
+                        <Link passHref href={`/dashboard/merge/${activeEvent.id}`}>
+                            <Button tag="a" color="success" ><i className="fas fa-download mr-2"></i>Download Merged Audio</Button>
+                        </Link>
                     </div>
 
 

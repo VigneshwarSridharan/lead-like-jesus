@@ -9,6 +9,7 @@ const { snakeCase } = require('change-case')
 const { Event, Config } = require('../modal/bookshelf');
 const { parseResponse } = require('../util');
 const audioconcat = require('audioconcat');
+const { exec } = require('child_process');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -100,8 +101,15 @@ router.post('/submit/:team/:user/:recordType', upload.array('audios[]'), (req, r
     // var file = JSON.parse(JSON.stringify(req.files))
 })
 
-function mergeAudio(list, output, callback) {
-
+function mergeAudio(list, output, res, callback) {
+    res.write(`data: ${JSON.stringify({ message: `
+    <hr />
+    <p class="m-0">Merge of: ${output.split('/').pop()}</p>
+    <ol>
+        ${list.map(item => `<li>${item.split('/').pop()}</li>`).join('')}
+    </ol>
+    
+    ` })}\n\n`)
     audioconcat(list)
         .concat(output)
         .on('start', function (command) {
@@ -111,11 +119,36 @@ function mergeAudio(list, output, callback) {
             console.error('Error:', err)
             console.error('ffmpeg stderr:', stderr);
         })
-        .on('end', function (output) {
+        .on('end', function (ac_output) {
             console.error('Audio created in:', output);
-            // setTimeout(() => {
-                
-                callback(null,'done')
+            res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Merge created in: ${output.split('/').pop()}</p>` })}\n\n`)
+
+            exec(`ffmpeg -i ${output} -y -ar 44100 ${output.replace('.mp3', '-LLJ.mp3')}`, (err, stdout, stderr) => {
+                if (err) {
+                    //some err occurred
+                    console.log(`Fix Audio Faild: ${output} to ${output.replace('.mp3', '-LLJ.mp3')}`)
+                    res.write(`data: ${JSON.stringify({ message: `<p class="m-0 text-danger">Fix Audio Faild: ${output.split('/').pop()} to ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })}\n\n`)
+                    callback(null, 'done')
+                } else {
+                    // the *entire* stdout and stderr (buffered)
+                    // console.log(`stdout: ${stdout}`);
+                    // console.log(`stderr: ${stderr}`);
+                    console.log(`Fix Audio: ${output} to ${output.replace('.mp3', '-LLJ.mp3')}`)
+                    res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Fix Audio: ${output.split('/').pop()} to ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })}\n\n`)
+                    fs.unlink(output, (err) => {
+                        if (err) {
+                            console.log(`Delete Faild: ${output}`)
+                            res.write(`data: ${JSON.stringify({ message: `<p class="m-0 text-danger">Delete Faild: ${output.split('/').pop()}</p>` })}\n\n`)
+                        }
+                        else {
+                            console.log(`Delete Bug Audio: ${output}`)
+                            res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Delete Bug Audio: ${output.split('/').pop()}</p>` })}\n\n`)
+                        }
+                        callback(null, 'done')
+                    })
+                }
+            });
+
             // }, 500);
         });
 
@@ -150,7 +183,7 @@ function mergeAudio(list, output, callback) {
     main();
 }
 
-function makeAudioMerge(activeEvent, callback) {
+function makeAudioMerge(activeEvent, res, callback) {
     var basePath1 = `./public/events/${activeEvent.value}/record-source`
     var teams = fs.readdirSync(basePath1);
 
@@ -203,7 +236,7 @@ function makeAudioMerge(activeEvent, callback) {
 
     async.series(
         result.map(item => function (callback) {
-            mergeAudio(item.files, item.output, callback)
+            mergeAudio(item.files, item.output, res, callback)
         }),
         function (err, results) {
             console.log(err)
@@ -232,21 +265,49 @@ function makeZip(input, output, callback) {
     archive.pipe(output);
 
     // append files from a sub-directory and naming it `new-subdir` within the archive (see docs for more options):
-    archive.directory(input, false);
+    input.forEach((item) => {
+        archive.directory(item, item.split('/').pop());
+    })
     archive.finalize();
 
 }
 
 router.get('/merge/:id', (req, res) => {
+    res.writeHead(200, {
+        'Connection': 'keep-alive',
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache'
+    });
+
+    // var count = 0;
+    // var handle = setInterval(function () {
+    //     console.log('writing ' + count);
+    //     res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Count: ${count}</p>` })}\n\n`)
+    //     count++
+    //     if (count == 10) {
+    //         clearInterval(handle)
+    //         res.write(`data: ${JSON.stringify({ message: 'end' })}\n\n`)
+    //         res.end()
+    //     }
+    // }, 1000);
+
+    res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Please Wait...</p>` })}\n\n`)
     if (fs.existsSync(`./public/events/${req.params.id}/record-source`)) {
         // Config.collection().fetchOne({ name: "active_event" }).then(activeEvent => {
         let activeEvent = { value: req.params.id }
 
-        makeAudioMerge(activeEvent, (err, result) => {
-            let zipSource = `./public/events/${activeEvent.value}/merged`
+        res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Merging process start.</p>` })}\n\n`)
+        makeAudioMerge(activeEvent, res, (err, result) => {
+            res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Merging process Finshed.</p>` })}\n\n`)
+            let zipSource = [`./public/events/${activeEvent.value}/merged`, `./public/events/${activeEvent.value}/record-source`,]
             let zipDist = `./public/events/${activeEvent.value}/merged.zip`
+            res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Zipping process start.</p>` })}\n\n`)
             makeZip(zipSource, zipDist, (err, status) => {
-                res.download(zipDist)
+                res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Zipping process Finshed.</p>` })}\n\n`)
+                res.write(`data: ${JSON.stringify({ message: `<div class="p-3 border-top text-center"><a class="btn btn-success" href="${`/events/${activeEvent.value}/merged.zip`}"><i class="fas fa-download mr-2"></i> Download The Zip</a></div>` })}\n\n`)
+                // res.download(zipDist)
+                res.write(`data: ${JSON.stringify({ message: 'end' })}\n\n`)
+                res.end()
             })
 
             // res.json(result)
@@ -254,7 +315,9 @@ router.get('/merge/:id', (req, res) => {
         // })
     }
     else {
-        res.send('<center><h1>Record Source Not Found</h1></center>')
+        res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Sorry! Record Source Not Found.</p>` })}\n\n`)
+        res.write(`data: ${JSON.stringify({ message: 'end' })}\n\n`)
+        res.end()
     }
 
 

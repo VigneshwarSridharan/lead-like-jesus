@@ -6,6 +6,7 @@ import { useRouter } from 'next/router'
 import Axios from "axios"
 import { API_URL } from "../../../lib/constants"
 import Swal from "sweetalert2"
+import Link from 'next/link'
 
 const Eventlist = (props) => {
     const router = useRouter()
@@ -63,7 +64,11 @@ const Eventlist = (props) => {
                                                     let name = item.file.split('/').pop()
                                                     return <a href={item.file} download>{name}</a>
                                                 })()}</td>
-                                                <td><a href={`${API_URL}/merge/${item.id}`}><i className="fas fa-download"></i></a></td>
+                                                <td>
+                                                    <Link href={`/dashboard/merge/${item.id}`} passHref>
+                                                        <a><i className="fas fa-download"></i></a>
+                                                    </Link>
+                                                </td>
                                                 <td>{moment(item.created_at).format('MMMM Do YYYY, h:mm:ss a')}</td>
                                                 <td>
                                                     <div>

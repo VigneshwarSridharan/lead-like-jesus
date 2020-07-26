@@ -40,7 +40,7 @@ const App = ({ Component, pageProps, router }) => {
                     <Sidebar />
                     <div className="content-wrapper">
                         <DashboardNavigation />
-                        <div className="content">
+                        <div className="content" id="content">
                             <Component {...pageProps} />
                         </div>
                     </div>
