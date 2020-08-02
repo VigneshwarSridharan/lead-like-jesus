@@ -14,14 +14,19 @@ const handle = app.getRequestHandler()
 
 app.prepare().then(() => {
   const server = express()
+
+  const http = require('http').createServer(server);
+  const socket = require('socket.io')(http)
+
+  server.socket = socket
   server.use(cors())
   server.use(bodyParser.json());
   server.use(bodyParser.urlencoded({ extended: true }));
   server.use(express.static('./public'))
   server.use('/api', APIRouters)
   server.use('/api/auth', AuthRouters)
-  server.use('/api/event',EventRouters)
-  server.use('/api/dashboard',DashboardRouters)
+  server.use('/api/event', EventRouters)
+  server.use('/api/dashboard', DashboardRouters)
 
   server.get('/a', (req, res) => {
     return app.render(req, res, '/a', req.query)
@@ -31,12 +36,20 @@ app.prepare().then(() => {
     return app.render(req, res, '/b', req.query)
   })
 
+  // socket.on('connection', (socket) => {
+  //   console.log('a user connected');
+  //   socket.emit('msg', { message: 'okok' })
+  //   socket.on('disconnect', () => {
+  //     console.log('user disconnected');
+  //   });
+  // })
+
 
   server.all('*', (req, res) => {
     return handle(req, res)
   })
 
-  server.listen(port, (err) => {
+  http.listen(port, (err) => {
     if (err) throw err
     console.log(`> Ready on http://localhost:${port}`)
   })

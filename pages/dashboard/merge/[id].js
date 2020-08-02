@@ -2,11 +2,12 @@ import { withRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { API_URL } from '../../../lib/constants'
 import { Card, Container, Col, Row } from 'reactstrap'
+import io from "socket.io-client";
 
 const Merge = props => {
-    console.log(props)
     const [result, setResult] = useState(["<p>Please Wait...</p>"])
     const { id } = props.router.query
+    const [processing, setProcessing] = useState(true)
     useEffect(() => {
         if (typeof (EventSource) !== "undefined") {
             // Yes! Server-sent events support!
@@ -16,20 +17,31 @@ const Merge = props => {
                 let res = JSON.parse(e.data)
                 if (res.message == 'end') {
                     source.close(); // stop retry
+                    setProcessing(false)
                     return
                 }
-                result.push(res.message)
-                setResult([...result])
-                let content = document.getElementById('content')
-                if(content) {
-                    content.scrollTo(0, content.scrollHeight);
-                }
+
 
             };
         } else {
             // Sorry! No server-sent events support.. href={`${API_URL}/merge/${activeEvent.id}`}
         }
     }, [])
+
+    useEffect(() => {
+        let socket = io();
+        socket.on('info', data => {
+            result.push(data.message)
+            setResult([...result])
+            let content = document.getElementById('content')
+            if (content) {
+                content.scrollTo(0, content.scrollHeight);
+            }
+        })
+
+        return () => socket.disconnect();
+    }, [])
+
     return (
         <section className="py-3">
             <Container fluid>
@@ -38,6 +50,11 @@ const Merge = props => {
                         <Card body className="mb-3">
                             <div dangerouslySetInnerHTML={{ __html: result.join(' ') }}></div>
                         </Card>
+                        {processing && (
+                            <div className="text-center text-primary h1">
+                                <i className="fas fa-circle-notch fa-spin"></i>
+                            </div>
+                        )}
                     </Col>
                 </Row>
             </Container>

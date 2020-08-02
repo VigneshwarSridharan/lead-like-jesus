@@ -10,6 +10,7 @@ const { Event, Config } = require('../modal/bookshelf');
 const { parseResponse } = require('../util');
 const audioconcat = require('audioconcat');
 const { exec } = require('child_process');
+const { route } = require('next/dist/next-server/server/router');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -101,15 +102,16 @@ router.post('/submit/:team/:user/:recordType', upload.array('audios[]'), (req, r
     // var file = JSON.parse(JSON.stringify(req.files))
 })
 
-function mergeAudio(list, output, res, callback) {
-    res.write(`data: ${JSON.stringify({ message: `
+function mergeAudio(list, output, req, callback) {
+    req.app.socket.emit('info', {
+        message: `
     <hr />
     <p class="m-0">Merge of: ${output.split('/').pop()}</p>
     <ol>
-        ${list.map(item => `<li>${item.split('/').pop()}</li>`).join('')}
+        ${list.filter(f => !f.includes('chime')).map(item => `<li>${item.split('/').pop()}</li>`).join('')}
     </ol>
     
-    ` })}\n\n`)
+    ` })
     audioconcat(list)
         .concat(output)
         .on('start', function (command) {
@@ -121,69 +123,39 @@ function mergeAudio(list, output, res, callback) {
         })
         .on('end', function (ac_output) {
             console.error('Audio created in:', output);
-            res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Merge created in: ${output.split('/').pop()}</p>` })}\n\n`)
+
+            req.app.socket.emit('info', { message: `<p class="m-0">Merge created in: ${output.split('/').pop()}</p>` })
 
             exec(`ffmpeg -i ${output} -y -ar 44100 ${output.replace('.mp3', '-LLJ.mp3')}`, (err, stdout, stderr) => {
                 if (err) {
                     //some err occurred
                     console.log(`Fix Audio Faild: ${output} to ${output.replace('.mp3', '-LLJ.mp3')}`)
-                    res.write(`data: ${JSON.stringify({ message: `<p class="m-0 text-danger">Fix Audio Faild: ${output.split('/').pop()} to ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })}\n\n`)
+                    req.app.socket.emit('info', { message: `<p class="m-0 text-danger">Fix Audio Faild: ${output.split('/').pop()} to ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })
                     callback(null, 'done')
                 } else {
                     // the *entire* stdout and stderr (buffered)
                     // console.log(`stdout: ${stdout}`);
                     // console.log(`stderr: ${stderr}`);
                     console.log(`Fix Audio: ${output} to ${output.replace('.mp3', '-LLJ.mp3')}`)
-                    res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Fix Audio: ${output.split('/').pop()} to ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })}\n\n`)
+                    req.app.socket.emit('info', { message: `<p class="m-0">Fix Audio: ${output.split('/').pop()} to ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })
                     fs.unlink(output, (err) => {
                         if (err) {
                             console.log(`Delete Faild: ${output}`)
-                            res.write(`data: ${JSON.stringify({ message: `<p class="m-0 text-danger">Delete Faild: ${output.split('/').pop()}</p>` })}\n\n`)
+                            req.app.socket.emit('info', { message: `<p class="m-0 text-danger">Delete Faild: ${output.split('/').pop()}</p>` })
                         }
                         else {
                             console.log(`Delete Bug Audio: ${output}`)
-                            res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Delete Bug Audio: ${output.split('/').pop()}</p>` })}\n\n`)
+                            req.app.socket.emit('info', { message: `<p class="m-0">Delete Bug Audio: ${output.split('/').pop()}</p>` })
                         }
                         callback(null, 'done')
                     })
                 }
             });
 
-            // }, 500);
         });
-
-    return
-    let files = list,
-        clips = [],
-        stream,
-        currentfile,
-        dhh = fs.createWriteStream(output);
-
-
-
-    files.forEach(function (file) {
-        clips.push(file);
-    });
-    function main() {
-        if (!clips.length) {
-            dhh.end("Done");
-            setTimeout(() => {
-                callback(null, 'Done')
-            }, 100);
-            return;
-        }
-        currentfile = clips.shift();
-        stream = fs.createReadStream(currentfile);
-        stream.pipe(dhh, { end: false });
-        stream.on("end", function () {
-            console.log(currentfile + ' appended');
-            main();
-        });
-    }
-    main();
 }
 
-function makeAudioMerge(activeEvent, res, callback) {
+function makeAudioMerge(activeEvent, req, callback) {
     var basePath1 = `./public/events/${activeEvent.value}/record-source`
     var teams = fs.readdirSync(basePath1);
 
@@ -212,16 +184,16 @@ function makeAudioMerge(activeEvent, res, callback) {
                         tempFiles.push(
                             basePath1 + '/' + team + '/' + member + '/' + type + '/' + member + '-' + snakeCase(nameItem.name) + '.mp3'
                         )
-                        // tempFiles.push(
-                        //     './public/tones/chime.mp3'
-                        // )
+                        tempFiles.push(
+                            './public/tones/chime.mp3'
+                        )
                     }
                 })
                 let output = `./public/events/${activeEvent.value}/merged/${team}/${type}`
                 fs.mkdirSync(output, { recursive: true });
 
                 if (tempFiles.length) {
-                    // tempFiles.pop();
+                    tempFiles.pop();
                     result.push({
                         files: tempFiles,
                         output: output + '/' + snakeCase(nameItem.name) + '.mp3'
@@ -236,7 +208,7 @@ function makeAudioMerge(activeEvent, res, callback) {
 
     async.series(
         result.map(item => function (callback) {
-            mergeAudio(item.files, item.output, res, callback)
+            mergeAudio(item.files, item.output, req, callback)
         }),
         function (err, results) {
             console.log(err)
@@ -273,57 +245,38 @@ function makeZip(input, output, callback) {
 }
 
 router.get('/merge/:id', (req, res) => {
+
     res.writeHead(200, {
         'Connection': 'keep-alive',
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache'
     });
 
-    // var count = 0;
-    // var handle = setInterval(function () {
-    //     console.log('writing ' + count);
-    //     res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Count: ${count}</p>` })}\n\n`)
-    //     count++
-    //     if (count == 10) {
-    //         clearInterval(handle)
-    //         res.write(`data: ${JSON.stringify({ message: 'end' })}\n\n`)
-    //         res.end()
-    //     }
-    // }, 1000);
-
     if (fs.existsSync(`./public/events/${req.params.id}/record-source`)) {
-        // Config.collection().fetchOne({ name: "active_event" }).then(activeEvent => {
         let activeEvent = { value: req.params.id }
 
-        res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Merging process start.</p>` })}\n\n`)
-        makeAudioMerge(activeEvent, res, (err, result) => {
-            res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Merging process Finshed.</p>` })}\n\n`)
+        req.app.socket.emit('info', { message: `<p class="m-0">Merging process start.</p>` })
+        makeAudioMerge(activeEvent, req, (err, result) => {
+            req.app.socket.emit('info', { message: `<p class="m-0">Merging process Finshed.</p>` })
             let zipSource = [`./public/events/${activeEvent.value}/merged`, `./public/events/${activeEvent.value}/record-source`,]
             let zipDist = `./public/events/${activeEvent.value}/merged.zip`
-            res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Zipping process start.</p>` })}\n\n`)
+            req.app.socket.emit('info', { message: `<p class="m-0">Zipping process start.</p>` })
             makeZip(zipSource, zipDist, (err, status) => {
-                res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Zipping process Finshed.</p>` })}\n\n`)
-                res.write(`data: ${JSON.stringify({ message: `<div class="p-3 border-top text-center"><a class="btn btn-success" href="${`/events/${activeEvent.value}/merged.zip`}"><i class="fas fa-download mr-2"></i> Download The Zip</a></div>` })}\n\n`)
-                // res.download(zipDist)
+                req.app.socket.emit('info', { message: `<p class="m-0">Zipping process Finshed.</p>` })
+                req.app.socket.emit('info', { message: `<div class="p-3 border-top text-center"><a class="btn btn-success" href="${`/events/${activeEvent.value}/merged.zip`}"><i class="fas fa-download mr-2"></i> Download The Zip</a></div>` })
                 res.write(`data: ${JSON.stringify({ message: 'end' })}\n\n`)
                 res.end()
             })
 
             // res.json(result)
         });
-        // })
     }
     else {
-        res.write(`data: ${JSON.stringify({ message: `<p class="m-0">Sorry! Record Source Not Found.</p>` })}\n\n`)
+        req.app.socket.emit('info', { message: `<p class="m-0">Sorry! Record Source Not Found.</p>` })
         res.write(`data: ${JSON.stringify({ message: 'end' })}\n\n`)
         res.end()
     }
 
-
-    // var files = fs.readdirSync('./public/events/10-07-2020/record-source/Team-B/brittani_bilt')
-    // var output = './brittani_bilt-merge.mp3';
-    // files = files.map(i => './public/events/10-07-2020/record-source/Team-B/brittani_bilt/' + i)
-    // mergeAudio(files, output)
 })
 
 module.exports = router;
