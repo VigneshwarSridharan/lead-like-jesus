@@ -6,6 +6,7 @@ const router = express.Router();
 const fs = require('fs');
 const { execSync } = require('child_process')
 const path = require('path')
+const { snakeCase } = require('change-case')
 
 
 
@@ -72,6 +73,36 @@ router.post('/addevent', (req, res) => {     //insert data
     // }).catch(err => {
     //     parseResponse(res, err)
     // })
+})
+
+router.post('/delete-audios', (req, res) => {
+    let { id, person, type } = req.body
+    const dir = `./public/events/${id}/record-source/${person.team}/${snakeCase(person.name)}/${type}`;
+
+    const removeDir = function (path) {
+        if (fs.existsSync(path)) {
+            const files = fs.readdirSync(path)
+
+            if (files.length > 0) {
+                files.forEach(function (filename) {
+                    if (fs.statSync(path + "/" + filename).isDirectory()) {
+                        removeDir(path + "/" + filename)
+                    } else {
+                        fs.unlinkSync(path + "/" + filename)
+                    }
+                })
+                fs.rmdirSync(path)
+            } else {
+                fs.rmdirSync(path)
+            }
+        } else {
+            console.log("Directory path not found.")
+        }
+    }
+
+    removeDir(dir);
+
+    res.send(req.body)
 })
 
 router.get('/:id', (req, res) => {    //edit data

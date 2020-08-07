@@ -3,10 +3,14 @@ import { API_URL } from "../../lib/constants";
 import { useEffect, useState } from "react";
 import Axios from "axios";
 import Link from 'next/link';
+import { EventServices } from "../../lib/APIServices";
+import Swal from 'sweetalert2';
 
 const Dashboard = (props) => {
     console.log(props)
-    let { members = [], eventCount = 0, userCount = 0, activeEvent = {} } = props
+    let { eventCount = 0, userCount = 0, activeEvent = {} } = props
+
+    const [members, setMembers] = useState(props.members || [])
 
     let tabs = members.reduce((total, item) => {
         total[item.team] = total[item.team] || []
@@ -17,6 +21,44 @@ const Dashboard = (props) => {
 
     const toggle = tab => {
         if (activeTab !== tab) setActiveTab(tab);
+    }
+
+    const deleteAudios = (type, person) => {
+        Swal.fire({
+            title: "Are you sure?",
+            text: `Are you sure to delete all ${type} audios of ${person.name}`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then(result => {
+            if (result.value) {
+                EventServices.deleteUserAudios({
+                    type,
+                    person,
+                    id: activeEvent.id
+                }).then(res => {
+                    console.log(res)
+                    Swal.fire(
+                        'Success!',
+                        'Deleted Successfully',
+                        'success'
+                    )
+                    let inx = members.findIndex(f => f.id === person.id)
+                    members[inx]['submitted'] = members[inx]['submitted'].filter(f => f != type)
+                    setMembers([...members])
+
+                }).catch(err => {
+                    console.log(err)
+                    Swal.fire(
+                        'Sorry!',
+                        'Faild to Delete',
+                        'error'
+                    )
+                })
+            }
+        })
     }
     return (
         <section className="py-5">
@@ -87,9 +129,9 @@ const Dashboard = (props) => {
                                                 <th>S.no</th>
                                                 <th>Name</th>
                                                 <th>Id (Email \ Phone Number)</th>
-                                                <th>Team</th>
-                                                <th>Generic</th>
-                                                <th>Scripture</th>
+                                                <th >Team</th>
+                                                <th colSpan={2}>Generic</th>
+                                                <th colSpan={2}>Scripture</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -102,7 +144,9 @@ const Dashboard = (props) => {
                                                             <td>{item.id}</td>
                                                             <td>{item.team}</td>
                                                             <td>{item.submitted.includes('generic') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}</td>
+                                                            <td>{item.submitted.includes('generic') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('generic', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}</td>
                                                             <td>{item.submitted.includes('scripture') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}</td>
+                                                            <td>{item.submitted.includes('scripture') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('scripture', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}</td>
                                                         </tr>
                                                     )
                                                 })
