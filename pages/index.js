@@ -8,13 +8,15 @@ import { AuthServie, request } from '../lib/APIServices';
 import Swal from 'sweetalert2';
 import { snakeCase } from 'change-case'
 import Timer from '../components/Timer';
+import { API_URL } from '../lib/constants';
+import Axios from 'axios';
 
-export default function Home() {
+const Home = props => {
     const [checkAuth, setCheckAuth] = useState(false)
     const userDetails = JSON.parse(localStorage.getItem('user-details') || '{}')
     const teamMembersData = JSON.parse(localStorage.getItem('team-members') || '[]')
     let [teamMembers, setTeamMembers] = useState(teamMembersData)
-    const [recordType, setRecordType] = useState('');
+    const [recordType, setRecordType] = useState(props.recordType.length == 1 ? props.recordType[0] : '');
     const router = useRouter()
     const [records, setRecords] = useState(teamMembers.map(i => ({ generic: null, scripture: null })))
     const [activeRecord, setActiveRecord] = useState(null)
@@ -135,7 +137,7 @@ export default function Home() {
                         <h6 className="mb-3"> Hi, {userDetails.name} you are in <b className="">{userDetails.team}</b>, and they are your team members.</h6>
                         <div className="record-type">
 
-                            {['generic', 'scripture'].map((item, inx) => {
+                            {props.recordType.map((item, inx) => {
                                 return (
                                     <div className={`item ${recordType === item ? 'active' : ''}`} onClick={() => setRecordType(item)} key={inx}>
                                         <div className="icon"><i className="fas fa-microphone"></i></div>
@@ -232,3 +234,16 @@ export default function Home() {
         </section>
     )
 }
+
+export async function getServerSideProps(context) {
+
+    let response = await Axios.get(`${API_URL}/event/record-type`)
+    response = response.data
+    return {
+        props: {
+            recordType: response.data || {}
+        }, // will be passed to the page component as props
+    }
+}
+
+export default Home

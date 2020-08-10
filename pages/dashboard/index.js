@@ -1,4 +1,4 @@
-import { Container, Card, Row, Col, Table, Button, Nav, NavItem, NavLink, TabPane, TabContent } from "reactstrap";
+import { Container, Card, Row, Col, Table, Button, Nav, NavItem, NavLink, TabPane, TabContent, Modal, ModalBody, ModalHeader } from "reactstrap";
 import { API_URL } from "../../lib/constants";
 import { useEffect, useState } from "react";
 import Axios from "axios";
@@ -8,9 +8,10 @@ import Swal from 'sweetalert2';
 
 const Dashboard = (props) => {
     console.log(props)
-    let { eventCount = 0, userCount = 0, activeEvent = {} } = props
+    let { eventCount = 0, userCount = 0, activeEvent = {}, } = props
 
     const [members, setMembers] = useState(props.members || [])
+    const [recordType, setRecordType] = useState([...props.recordType] || []);
 
     let tabs = members.reduce((total, item) => {
         total[item.team] = total[item.team] || []
@@ -18,6 +19,13 @@ const Dashboard = (props) => {
         return total
     }, {})
     const [activeTab, setActiveTab] = useState(Object.keys(tabs).length ? Object.keys(tabs)[0] : '');
+    const [payer, setPlayer] = useState({
+        isOpen: false,
+        base: "",
+        list: []
+    })
+
+    const togglePayer = (isOpen = false, base = "", list = []) => setPlayer({ isOpen, base, list })
 
     const toggle = tab => {
         if (activeTab !== tab) setActiveTab(tab);
@@ -60,6 +68,27 @@ const Dashboard = (props) => {
             }
         })
     }
+    const updateRecordType = () => {
+        if (recordType.length) {
+            EventServices.updateRecordType({ recordType }).then(res => {
+                Swal.fire(
+                    'Success!',
+                    'Updated Successfully',
+                    'success'
+                )
+            }).catch(err => {
+                console.log(err)
+                Swal.fire(
+                    'Sorry!',
+                    'Faild to update',
+                    'error'
+                )
+            })
+        }
+        else {
+            Swal.fire('Faild', "Record Type is required", 'error')
+        }
+    }
     return (
         <section className="py-5">
             <Container fluid>
@@ -98,6 +127,40 @@ const Dashboard = (props) => {
                         </Card>
                     </Col>
                 </Row>
+                <Card body className="mb-3">
+                    <h5 className="mb-3">Record Type</h5>
+                    <Row className="align-items-center">
+                        {
+                            ["generic", "scripture"].map((item, inx) => {
+                                let active = recordType.includes(item);
+                                return (
+                                    <Col key={inx}>
+                                        <Card
+                                            body
+                                            className={`text-capitalize flex-row align-items-center pointer ${active ? 'bg-primary text-white border-primary' : ''}`}
+                                            onClick={() => {
+                                                if (active) {
+                                                    recordType.splice(inx, 1)
+                                                    setRecordType([...recordType])
+                                                }
+                                                else {
+                                                    recordType.push(item);
+                                                    recordType.sort()
+                                                    setRecordType([...recordType])
+                                                }
+                                            }}
+                                        >
+                                            <i className={`far ${active ? 'fa-check-square ' : 'fa-square'} mr-3`}></i> <b>{item}</b>
+                                        </Card>
+                                    </Col>
+                                )
+                            })
+                        }
+                        <Col className="text-center">
+                            <Button color="success" onClick={updateRecordType} disabled={(recordType.toString() === props.recordType.toString())}>Update</Button>
+                        </Col>
+                    </Row>
+                </Card>
                 <Card body>
                     <div className="d-flex align-items-start justify-content-between mb-3">
                         <h3>Active Event Details ({activeEvent.name})</h3>
@@ -130,8 +193,8 @@ const Dashboard = (props) => {
                                                 <th>Name</th>
                                                 <th>Id (Email \ Phone Number)</th>
                                                 <th >Team</th>
-                                                <th colSpan={2}>Generic</th>
-                                                <th colSpan={2}>Scripture</th>
+                                                <th>Generic</th>
+                                                <th>Scripture</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -143,10 +206,28 @@ const Dashboard = (props) => {
                                                             <td>{item.name}</td>
                                                             <td>{item.id}</td>
                                                             <td>{item.team}</td>
-                                                            <td>{item.submitted.includes('generic') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}</td>
-                                                            <td>{item.submitted.includes('generic') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('generic', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}</td>
-                                                            <td>{item.submitted.includes('scripture') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}</td>
-                                                            <td>{item.submitted.includes('scripture') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('scripture', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}</td>
+                                                            <td>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('generic') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
+                                                                </div>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('generic') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/generic', item.genericList)}><i className="fas fa-play"></i></Button> : ''}
+                                                                </div>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('generic') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('generic', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('scripture') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
+                                                                </div>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('scripture') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/scripture', item.scriptureList)}><i className="fas fa-play"></i></Button> : ''}
+                                                                </div>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('scripture') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('scripture', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
+                                                                </div>
+                                                            </td>
                                                         </tr>
                                                     )
                                                 })
@@ -161,6 +242,17 @@ const Dashboard = (props) => {
 
                 </Card>
             </Container>
+
+            <Modal isOpen={payer.isOpen} size="lg" centered toggle={() => togglePayer(false)}>
+                <ModalHeader toggle={() => togglePayer(false)}><i className="fas fa-volume-up mr-3"></i>Player</ModalHeader>
+                <ModalBody className="p-0" style={{ height: 350 }}>
+                    <iframe
+                        style={{ width: "100%", height: 350, margin: 0, padding: 0, border: 0 }}
+                        src={`/player?base=${window.location.origin}${payer.base}/&list=${payer.list.toString()}`}
+                    // src="/player?base=https://blessedman.live/events/10041/record-source/Team-A/aadarsh/generic/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
+                    />
+                </ModalBody>
+            </Modal>
 
         </section>
     )

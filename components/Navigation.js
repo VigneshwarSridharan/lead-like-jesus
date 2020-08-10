@@ -25,7 +25,8 @@ const Navigation = (props) => {
                                 <React.Fragment>
                                     <NavbarText className="mr-3"> <i className="fas fa-user"></i> {name}</NavbarText>
                                     <NavbarText style={{cursor:'pointer'}} onClick={() => {
-                                        window.localStorage.clear()
+                                        window.localStorage.removeItem('user-details')
+                                        window.localStorage.removeItem('team-members')
                                         router.replace('/login')
                                     }}> Logout</NavbarText>
                                 </React.Fragment>
