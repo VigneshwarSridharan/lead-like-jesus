@@ -14,13 +14,33 @@ import Axios from 'axios';
 const Home = props => {
     const [checkAuth, setCheckAuth] = useState(false)
     const userDetails = JSON.parse(localStorage.getItem('user-details') || '{}')
-    const teamMembersData = JSON.parse(localStorage.getItem('team-members') || '[]')
-    let [teamMembers, setTeamMembers] = useState(teamMembersData)
+    let [teamMembers, setTeamMembers] = useState([])
     const [recordType, setRecordType] = useState(props.recordType.length == 1 ? props.recordType[0] : '');
     const router = useRouter()
-    const [records, setRecords] = useState(teamMembers.map(i => ({ generic: null, scripture: null })))
+    const [records, setRecords] = useState([])
     const [activeRecord, setActiveRecord] = useState(null)
     const [permisstion, setPermisstion] = useState(true)
+    const [isLoading, setIsLoading] = useState(true);
+    const userId = localStorage.getItem('user-id') || ''
+    useEffect(() => {
+        if(userDetails.id) {
+            AuthServie.login(userDetails.id).then(res => {
+                if (res.status == "success") {
+                    setTeamMembers(res.data.teamMembers)
+                    setRecords(res.data.teamMembers.map(i => ({ generic: null, scripture: null })))
+                    setIsLoading(false)
+                }
+                else {
+                    Swal.fire(
+                        "Sorry!",
+                        res.message,
+                        "error"
+                    )
+                    setIsLoading(false)
+                }
+            })
+        }
+    }, [])
 
     const onRecordingStart = (inx) => {
         setActiveRecord(inx)
@@ -67,6 +87,18 @@ const Home = props => {
         )
     }
 
+    if (isLoading) {
+        return (
+            <section className="py-5 my-5">
+                <Container>
+                    <Card body className="text-center">
+                        <h3><i className="fas fa-circle-notch fa-spin text-primary"></i></h3> Please Wait
+                    </Card>
+                </Container>
+            </section>
+        )
+    }
+
     const onSubmit = () => {
         if (records.filter(f => !f[recordType]).length) {
             Swal.fire('Sorry!', 'All ' + recordType + ' audio recorders are required.', 'error')
@@ -109,13 +141,15 @@ const Home = props => {
     }
 
     let isSubmitted = { generic: false, scripture: false }
-    let [firstMembers] = teamMembers
+    let [firstMembers = {}] = teamMembers
     if (firstMembers.generic) {
         isSubmitted['generic'] = true
     }
     if (firstMembers.scripture) {
         isSubmitted['scripture'] = true
     }
+
+
 
     if (!permisstion) {
         return (

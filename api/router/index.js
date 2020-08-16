@@ -97,6 +97,34 @@ router.get('/login/:id', (req, res) => {
 router.post('/submit/:team/:user/:recordType', upload.array('audios[]'), (req, res) => {
 
     res.json({ files: req.files })
+
+    if (Array.isArray(req.files)) {
+        async.parallel(req.files.map(item => callback => {
+            let { path: filePath, filename } = item
+            let basePath = item.path.split('\\');
+            basePath.pop()
+            basePath = basePath.join('\\')
+            let output = `${basePath}/${filename.replace('.mp3', '')}-loudnorm.mp3`;
+            exec(`ffmpeg -i ${filePath} -filter:a loudnorm="i=-24:lra=7.0:tp=-2.0" ${output}`, (err, stdout, stderr) => {
+                if (err) {
+                    callback(err)
+                }
+                else {
+                    fs.unlinkSync(filePath)
+                    // console.log(filePath + ' - Deleted')
+                    fs.renameSync(output, filePath)
+                    // console.log('Renamed: ' + output + ' to ' + filePath)
+                    callback(null, 'done')
+                }
+            })
+        }), (err, result) => {
+            if (err) {
+                console.log(err, result)
+                return
+            }
+            console.log(err, result)
+        })
+    }
     // makeAudioMerge((err, result) => {
     // })
     // var file = JSON.parse(JSON.stringify(req.files))
@@ -126,29 +154,42 @@ function mergeAudio(list, output, req, callback) {
 
             req.app.socket.emit('info', { message: `<p class="m-0">Merge created in: ${output.split('/').pop()}</p>` })
 
-            exec(`ffmpeg -i ${output} -y -ar 44100 ${output.replace('.mp3', '-LLJ.mp3')}`, (err, stdout, stderr) => {
+            exec(`ffmpeg -i ${output} -y -ar 44100 ${output.replace('.mp3', '-FIX.mp3')}`, (err, stdout, stderr) => {
                 if (err) {
                     //some err occurred
-                    console.log(`Fix Audio Faild: ${output} to ${output.replace('.mp3', '-LLJ.mp3')}`)
+                    console.log(`Fix Audio Faild: ${output} to ${output.replace('.mp3', '-FIX.mp3')}`)
                     req.app.socket.emit('info', { message: `<p class="m-0 text-danger">Fix Audio Faild: ${output.split('/').pop()} to ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })
                     callback(null, 'done')
                 } else {
                     // the *entire* stdout and stderr (buffered)
                     // console.log(`stdout: ${stdout}`);
                     // console.log(`stderr: ${stderr}`);
-                    console.log(`Fix Audio: ${output} to ${output.replace('.mp3', '-LLJ.mp3')}`)
+                    console.log(`Fix Audio: ${output} to ${output.replace('.mp3', '-FIX.mp3')}`)
+                    // `ffmpeg -i ${'./public/tones/piano-loudnorm.mp3'} -i ${output.replace('-FIX.mp3', '-LLJ.mp3')} -filter_complex amix=inputs=2:duration=first:dropout_transition=3 OUTPUT.mp3`
                     req.app.socket.emit('info', { message: `<p class="m-0">Fix Audio: ${output.split('/').pop()} to ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })
-                    fs.unlink(output, (err) => {
+                    exec(`ffmpeg -i ${output.replace('.mp3', '-FIX.mp3')} -i ${'./public/tones/piano-loudnorm.mp3'} -y -filter_complex amix=inputs=2:duration=first:dropout_transition=3 ${output.replace('.mp3', '-LLJ.mp3')}`, (err, stdout, stderr) => {
                         if (err) {
-                            console.log(`Delete Faild: ${output}`)
-                            req.app.socket.emit('info', { message: `<p class="m-0 text-danger">Delete Faild: ${output.split('/').pop()}</p>` })
+                            callback(err)
                         }
                         else {
-                            console.log(`Delete Bug Audio: ${output}`)
-                            req.app.socket.emit('info', { message: `<p class="m-0">Delete Bug Audio: ${output.split('/').pop()}</p>` })
+                            console.log(`Adding Background Music: ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}`)
+                            req.app.socket.emit('info', { message: `<p class="m-0">Adding Background Music: ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })
+                            fs.unlinkSync(output)
+                            fs.unlinkSync(output.replace('.mp3', '-FIX.mp3'))
+                            callback(null, 'done')
                         }
-                        callback(null, 'done')
                     })
+                    // fs.unlink(output, (err) => {
+                    //     if (err) {
+                    //         console.log(`Delete Faild: ${output}`)
+                    //         req.app.socket.emit('info', { message: `<p class="m-0 text-danger">Delete Faild: ${output.split('/').pop()}</p>` })
+                    //     }
+                    //     else {
+                    //         console.log(`Delete Bug Audio: ${output}`)
+                    //         req.app.socket.emit('info', { message: `<p class="m-0">Delete Bug Audio: ${output.split('/').pop()}</p>` })
+                    //     }
+                    //     callback(null, 'done')
+                    // })
                 }
             });
 

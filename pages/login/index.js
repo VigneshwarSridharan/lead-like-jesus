@@ -16,7 +16,6 @@ const Login = (props) => {
         AuthServie.login(username.trim().toLowerCase()).then(res => {
             if (res.status == "success") {
                 localStorage.setItem('user-details', JSON.stringify(res.data.userDetails))
-                localStorage.setItem('team-members', JSON.stringify(res.data.teamMembers))
                 router.replace('/')
             }
             else {

@@ -75,30 +75,32 @@ router.post('/addevent', (req, res) => {     //insert data
     // })
 })
 
+const removeDir = function (path) {
+    if (fs.existsSync(path)) {
+        const files = fs.readdirSync(path)
+
+        if (files.length > 0) {
+            files.forEach(function (filename) {
+                if (fs.statSync(path + "/" + filename).isDirectory()) {
+                    removeDir(path + "/" + filename)
+                } else {
+                    fs.unlinkSync(path + "/" + filename)
+                }
+            })
+            fs.rmdirSync(path)
+        } else {
+            fs.rmdirSync(path)
+        }
+    } else {
+        console.log("Directory path not found.")
+    }
+}
+
 router.post('/delete-audios', (req, res) => {
     let { id, person, type } = req.body
     const dir = `./public/events/${id}/record-source/${person.team}/${snakeCase(person.name)}/${type}`;
 
-    const removeDir = function (path) {
-        if (fs.existsSync(path)) {
-            const files = fs.readdirSync(path)
-
-            if (files.length > 0) {
-                files.forEach(function (filename) {
-                    if (fs.statSync(path + "/" + filename).isDirectory()) {
-                        removeDir(path + "/" + filename)
-                    } else {
-                        fs.unlinkSync(path + "/" + filename)
-                    }
-                })
-                fs.rmdirSync(path)
-            } else {
-                fs.rmdirSync(path)
-            }
-        } else {
-            console.log("Directory path not found.")
-        }
-    }
+    
 
     removeDir(dir);
 
@@ -163,6 +165,7 @@ router.delete('/:id', (req, res) => {
     new Event({ id: req.params.id }).destroy().then(user => {
         parseResponse(res, null, user)
 
+        removeDir(`public/events/${req.params.id}`)
         // const DIR = path.resolve(__dirname, `../../public/events/${req.params.id}`)
         // console.log(DIR)
         // if (process.platform === 'win32') {
