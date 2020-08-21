@@ -167,7 +167,7 @@ function mergeAudio(list, output, req, callback) {
                     console.log(`Fix Audio: ${output} to ${output.replace('.mp3', '-FIX.mp3')}`)
                     // `ffmpeg -i ${'./public/tones/piano-loudnorm.mp3'} -i ${output.replace('-FIX.mp3', '-LLJ.mp3')} -filter_complex amix=inputs=2:duration=first:dropout_transition=3 OUTPUT.mp3`
                     req.app.socket.emit('info', { message: `<p class="m-0">Fix Audio: ${output.split('/').pop()} to ${output.replace('.mp3', '-LLJ.mp3').split('/').pop()}</p>` })
-                    exec(`ffmpeg -i ${output.replace('.mp3', '-FIX.mp3')} -i ${'./public/tones/piano-loudnorm.mp3'} -y -filter_complex amix=inputs=2:duration=first:dropout_transition=3 ${output.replace('.mp3', '-LLJ.mp3')}`, (err, stdout, stderr) => {
+                    exec(`ffmpeg -i ${output.replace('.mp3', '-FIX.mp3')} -i ${'./public/tones/bg-music.mp3'} -y -filter_complex amix=inputs=2:duration=first:dropout_transition=3 ${output.replace('.mp3', '-LLJ.mp3')}`, (err, stdout, stderr) => {
                         if (err) {
                             callback(err)
                         }
