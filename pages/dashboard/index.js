@@ -203,7 +203,7 @@ const Dashboard = (props) => {
                                                     return (
                                                         <tr key={inx}>
                                                             <td>{inx + 1}</td>
-                                                            <td>{item.name}</td>
+                                                            <td>{item.name} {item.leader && '(Leader)'}</td>
                                                             <td>{item.id}</td>
                                                             <td>{item.team}</td>
                                                             <td>

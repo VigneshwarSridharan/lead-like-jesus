@@ -73,11 +73,29 @@ router.get('/login/:id', (req, res) => {
                 return { ...item, generic, scripture };
             })
 
+            let teamMembersTable = jsonData.filter(item => item.team == userDetails.team)
+            teamMembersTable = teamMembersTable.map(item => {
+                const submitted = `./public/events/${activeEvent.value}/record-source/${item.team}/${snakeCase(item.name)}`;
+                if (fs.existsSync(submitted)) {
+                    item['submitted'] = fs.readdirSync(submitted)
+                    item['submitted'].forEach(type => {
+                        item[type + 'List'] = fs.readdirSync(`${submitted}/${type}`)
+                        item['base'] = `/events/${activeEvent.value}/record-source/${item.team}/${snakeCase(item.name)}`
+                    });
+                }
+                else {
+                    item['submitted'] = []
+                }
+                return item;
+            })
+
             result = {
                 status: 'success',
                 data: {
                     userDetails,
-                    teamMembers
+                    teamMembers,
+                    teamMembersTable,
+                    activeEvent
                 }
             }
         }

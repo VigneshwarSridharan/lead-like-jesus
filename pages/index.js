@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Container, Row, Col, Card, ListGroup, ListGroupItem, Button, Alert } from 'reactstrap';
+import { Container, Row, Col, Card, ListGroup, ListGroupItem, Button, Alert, ModalHeader, ModalBody, Modal, Table } from 'reactstrap';
 import IconPersonFill from '../components/icons/IconPersonFill';
 import Recorder from '../components/recorder'
-import { AuthServie, request } from '../lib/APIServices';
+import { AuthServie, EventServices, request } from '../lib/APIServices';
 import Swal from 'sweetalert2';
 import { snakeCase } from 'change-case'
 import Timer from '../components/Timer';
@@ -15,18 +15,72 @@ const Home = props => {
     const [checkAuth, setCheckAuth] = useState(false)
     const userDetails = JSON.parse(localStorage.getItem('user-details') || '{}')
     let [teamMembers, setTeamMembers] = useState([])
+    let [teamMembersTable, setTeamMembersTable] = useState([])
     const [recordType, setRecordType] = useState(props.recordType.length == 1 ? props.recordType[0] : '');
     const router = useRouter()
     const [records, setRecords] = useState([])
     const [activeRecord, setActiveRecord] = useState(null)
     const [permisstion, setPermisstion] = useState(true)
     const [isLoading, setIsLoading] = useState(true);
-    const userId = localStorage.getItem('user-id') || ''
+    const [activeEvent, setActiveEvent] = useState({});
+    const userId = localStorage.getItem('user-id') || '';
+
+    const [payer, setPlayer] = useState({
+        isOpen: false,
+        base: "",
+        list: []
+    })
+
+    const togglePayer = (isOpen = false, base = "", list = []) => setPlayer({ isOpen, base, list })
+
+    const deleteAudios = (type, person) => {
+        Swal.fire({
+            title: "Are you sure?",
+            text: `Are you sure to delete all ${type} audios of ${person.name}`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then(result => {
+            if (result.value) {
+                EventServices.deleteUserAudios({
+                    type,
+                    person,
+                    id: activeEvent.value
+                }).then(res => {
+                    console.log(res)
+                    Swal.fire(
+                        'Success!',
+                        'Deleted Successfully',
+                        'success'
+                    )
+                    let inx = teamMembersTable.findIndex(f => f.id === person.id)
+                    teamMembersTable[inx]['submitted'] = teamMembersTable[inx]['submitted'].filter(f => f != type)
+                    setTeamMembersTable([...teamMembersTable])
+                    if(person.id == userDetails.id) {
+                        window.location.reload();
+                    }
+
+                }).catch(err => {
+                    console.log(err)
+                    Swal.fire(
+                        'Sorry!',
+                        'Faild to Delete',
+                        'error'
+                    )
+                })
+            }
+        })
+    }
+
     useEffect(() => {
-        if(userDetails.id) {
+        if (userDetails.id) {
             AuthServie.login(userDetails.id).then(res => {
                 if (res.status == "success") {
                     setTeamMembers(res.data.teamMembers)
+                    setTeamMembersTable(res.data.teamMembersTable)
+                    setActiveEvent(res.data.activeEvent)
                     setRecords(res.data.teamMembers.map(i => ({ generic: null, scripture: null })))
                     setIsLoading(false)
                 }
@@ -167,21 +221,78 @@ const Home = props => {
         <section className="py-5 my-5">
             <Container>
                 <Row>
-                    <Col xl={{ size: 8, offset: 2 }}>
+                    <Col xl={userDetails.leader ? { size: 10, offset: 1 } : { size: 8, offset: 2 }}>
                         <h6 className="mb-3"> Hi, {userDetails.name} you are in <b className="">{userDetails.team}</b>, and they are your team members.</h6>
                         <div className="record-type">
 
-                            {props.recordType.map((item, inx) => {
+                            {[...props.recordType, 'members'].map((item, inx) => {
+                                if (!userDetails.leader && item == 'members') return
                                 return (
                                     <div className={`item ${recordType === item ? 'active' : ''}`} onClick={() => setRecordType(item)} key={inx}>
-                                        <div className="icon"><i className="fas fa-microphone"></i></div>
-                                        <div >{item}</div>
+                                        <div className="icon"><i className={`fas ${item == 'members' ? 'fa-users' : 'fa-microphone'}`}></i></div>
+                                        <div >{item} {item == 'members' && <span className="badge badge-primary">New</span>} </div>
                                     </div>
                                 )
                             })}
                         </div>
+
                         {
-                            recordType != '' ? (
+                            recordType == 'members' && (
+                                <Card body>
+                                    <Table striped>
+                                        <thead>
+                                            <tr>
+                                                <th>S.no</th>
+                                                <th>Name</th>
+                                                <th>Id (Email \ Phone Number)</th>
+                                                <th >Team</th>
+                                                <th>Generic</th>
+                                                <th>Scripture</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {
+                                                teamMembersTable.map((item, inx) => {
+                                                    return (
+                                                        <tr key={inx}>
+                                                            <td>{inx + 1}</td>
+                                                            <td>{item.name} {item.leader && '(Leader)'}</td>
+                                                            <td>{item.id}</td>
+                                                            <td>{item.team}</td>
+                                                            <td>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('generic') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
+                                                                </div>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('generic') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/generic', item.genericList)}><i className="fas fa-play"></i></Button> : ''}
+                                                                </div>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('generic') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('generic', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('scripture') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
+                                                                </div>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('scripture') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/scripture', item.scriptureList)}><i className="fas fa-play"></i></Button> : ''}
+                                                                </div>
+                                                                <div className="d-inline mx-2">
+                                                                    {item.submitted.includes('scripture') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('scripture', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })
+                                            }
+                                        </tbody>
+                                    </Table>
+                                </Card>
+                            )
+                        }
+
+                        {
+                            props.recordType.includes(recordType) ? (
                                 <div>
 
                                     {
@@ -254,17 +365,33 @@ const Home = props => {
                                         )
                                     }
                                 </div>
-                            ) : (
+                            ) : ''
+                        }
+
+                        {
+                            recordType === '' && (
+                                (
                                     <div className="text-center">
                                         <span className="text-danger">*</span>Choose the one option to proceed
                                     </div>
                                 )
+                            )
                         }
 
                     </Col>
                 </Row>
 
             </Container>
+            <Modal isOpen={payer.isOpen} size="lg" centered toggle={() => togglePayer(false)}>
+                <ModalHeader toggle={() => togglePayer(false)}><i className="fas fa-volume-up mr-3"></i>Player</ModalHeader>
+                <ModalBody className="p-0" style={{ height: 350 }}>
+                    <iframe
+                        style={{ width: "100%", height: 350, margin: 0, padding: 0, border: 0 }}
+                        src={`/player?base=${window.location.origin}${payer.base}/&list=${payer.list.toString()}`}
+                    // src="/player?base=https://blessedman.live/events/10041/record-source/Team-A/aadarsh/generic/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
+                    />
+                </ModalBody>
+            </Modal>
         </section>
     )
 }
