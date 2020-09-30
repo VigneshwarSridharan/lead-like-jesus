@@ -50,27 +50,27 @@ router.get('/login/:id', (req, res) => {
         var result = {}
         if (userDetails) {
             let teamMembers = jsonData.filter(item => item.team == userDetails.team && item.id.toLowerCase() != id.toLowerCase())
-            const genericUrl = `./public/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/generic`;
+            const appreciationUrl = `./public/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/appreciation`;
             const scriptureUrl = `./public/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/scripture`;
-            let genericList = [];
+            let appreciationList = [];
             let scriptureList = [];
-            if (fs.existsSync(genericUrl)) {
-                genericList = fs.readdirSync(genericUrl)
+            if (fs.existsSync(appreciationUrl)) {
+                appreciationList = fs.readdirSync(appreciationUrl)
             }
             if (fs.existsSync(scriptureUrl)) {
                 scriptureList = fs.readdirSync(scriptureUrl)
             }
 
             teamMembers = teamMembers.map(item => {
-                let generic = genericList.find(f => f.includes(snakeCase(item.name))) || '';
+                let appreciation = appreciationList.find(f => f.includes(snakeCase(item.name))) || '';
                 let scripture = scriptureList.find(f => f.includes(snakeCase(item.name))) || '';
-                if (generic) {
-                    generic = `/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/generic/${generic}`
+                if (appreciation) {
+                    appreciation = `/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/appreciation/${appreciation}`
                 }
                 if (scripture) {
                     scripture = `/events/${activeEvent.value}/record-source/${userDetails.team}/${snakeCase(userDetails.name)}/scripture/${scripture}`
                 }
-                return { ...item, generic, scripture };
+                return { ...item, appreciation, scripture };
             })
 
             let teamMembersTable = jsonData.filter(item => item.team == userDetails.team)
@@ -227,7 +227,7 @@ function makeAudioMerge(activeEvent, req, callback) {
 
     let result = [];
 
-    ['generic', 'scripture'].map(type => {
+    ['appreciation', 'scripture'].map(type => {
 
         teams.map((team, inx) => {
             let members = fs.readdirSync(basePath1 + '/' + team);
