@@ -131,7 +131,7 @@ const Dashboard = (props) => {
                     <h5 className="mb-3">Record Type</h5>
                     <Row className="align-items-center">
                         {
-                            ["generic", "scripture"].map((item, inx) => {
+                            ["appreciation", "scripture"].map((item, inx) => {
                                 let active = recordType.includes(item);
                                 return (
                                     <Col key={inx}>
@@ -193,7 +193,7 @@ const Dashboard = (props) => {
                                                 <th>Name</th>
                                                 <th>Id (Email \ Phone Number)</th>
                                                 <th >Team</th>
-                                                <th>Generic</th>
+                                                <th>Appreciation</th>
                                                 <th>Scripture</th>
                                             </tr>
                                         </thead>
@@ -203,18 +203,18 @@ const Dashboard = (props) => {
                                                     return (
                                                         <tr key={inx}>
                                                             <td>{inx + 1}</td>
-                                                            <td>{item.name} {item.leader && '(Leader)'}</td>
+                                                            <td>{item.name} {item.observer && '(Observer)'}</td>
                                                             <td>{item.id}</td>
                                                             <td>{item.team}</td>
                                                             <td>
                                                                 <div className="d-inline mx-2">
-                                                                    {item.submitted.includes('generic') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
+                                                                    {item.submitted.includes('appreciation') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
                                                                 </div>
                                                                 <div className="d-inline mx-2">
-                                                                    {item.submitted.includes('generic') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/generic', item.genericList)}><i className="fas fa-play"></i></Button> : ''}
+                                                                    {item.submitted.includes('appreciation') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/appreciation', item.appreciationList)}><i className="fas fa-play"></i></Button> : ''}
                                                                 </div>
                                                                 <div className="d-inline mx-2">
-                                                                    {item.submitted.includes('generic') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('generic', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
+                                                                    {item.submitted.includes('appreciation') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('appreciation', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
                                                                 </div>
                                                             </td>
                                                             <td>
@@ -249,7 +249,7 @@ const Dashboard = (props) => {
                     <iframe
                         style={{ width: "100%", height: 350, margin: 0, padding: 0, border: 0 }}
                         src={`/player?base=${window.location.origin}${payer.base}/&list=${payer.list.toString()}`}
-                    // src="/player?base=https://blessedman.live/events/10041/record-source/Team-A/aadarsh/generic/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
+                    // src="/player?base=https://blessedman.live/events/10041/record-source/Team-A/aadarsh/appreciation/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
                     />
                 </ModalBody>
             </Modal>

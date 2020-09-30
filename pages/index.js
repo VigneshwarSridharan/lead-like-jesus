@@ -81,7 +81,7 @@ const Home = props => {
                     setTeamMembers(res.data.teamMembers)
                     setTeamMembersTable(res.data.teamMembersTable)
                     setActiveEvent(res.data.activeEvent)
-                    setRecords(res.data.teamMembers.map(i => ({ generic: null, scripture: null })))
+                    setRecords(res.data.teamMembers.map(i => ({ appreciation: null, scripture: null })))
                     setIsLoading(false)
                 }
                 else {
@@ -194,10 +194,10 @@ const Home = props => {
         })
     }
 
-    let isSubmitted = { generic: false, scripture: false }
+    let isSubmitted = { appreciation: false, scripture: false }
     let [firstMembers = {}] = teamMembers
-    if (firstMembers.generic) {
-        isSubmitted['generic'] = true
+    if (firstMembers.appreciation) {
+        isSubmitted['appreciation'] = true
     }
     if (firstMembers.scripture) {
         isSubmitted['scripture'] = true
@@ -221,12 +221,12 @@ const Home = props => {
         <section className="py-5 my-5">
             <Container>
                 <Row>
-                    <Col xl={userDetails.leader ? { size: 10, offset: 1 } : { size: 8, offset: 2 }}>
+                    <Col xl={userDetails.observer ? { size: 10, offset: 1 } : { size: 8, offset: 2 }}>
                         <h6 className="mb-3"> Hi, {userDetails.name} you are in <b className="">{userDetails.team}</b>, and they are your team members.</h6>
                         <div className="record-type">
 
                             {[...props.recordType, 'members'].map((item, inx) => {
-                                if (!userDetails.leader && item == 'members') return
+                                if (!userDetails.observer && item == 'members') return
                                 return (
                                     <div className={`item ${recordType === item ? 'active' : ''}`} onClick={() => setRecordType(item)} key={inx}>
                                         <div className="icon"><i className={`fas ${item == 'members' ? 'fa-users' : 'fa-microphone'}`}></i></div>
@@ -246,7 +246,7 @@ const Home = props => {
                                                 <th>Name</th>
                                                 <th>Id (Email \ Phone Number)</th>
                                                 <th >Team</th>
-                                                <th>Generic</th>
+                                                <th>Appreciation</th>
                                                 <th>Scripture</th>
                                             </tr>
                                         </thead>
@@ -256,18 +256,18 @@ const Home = props => {
                                                     return (
                                                         <tr key={inx}>
                                                             <td>{inx + 1}</td>
-                                                            <td>{item.name} {item.leader && '(Leader)'}</td>
+                                                            <td>{item.name} {item.observer && '(Observer)'}</td>
                                                             <td>{item.id}</td>
                                                             <td>{item.team}</td>
                                                             <td>
                                                                 <div className="d-inline mx-2">
-                                                                    {item.submitted.includes('generic') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
+                                                                    {item.submitted.includes('appreciation') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
                                                                 </div>
                                                                 <div className="d-inline mx-2">
-                                                                    {item.submitted.includes('generic') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/generic', item.genericList)}><i className="fas fa-play"></i></Button> : ''}
+                                                                    {item.submitted.includes('appreciation') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/appreciation', item.appreciationList)}><i className="fas fa-play"></i></Button> : ''}
                                                                 </div>
                                                                 <div className="d-inline mx-2">
-                                                                    {item.submitted.includes('generic') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('generic', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
+                                                                    {item.submitted.includes('appreciation') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('appreciation', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
                                                                 </div>
                                                             </td>
                                                             <td>
@@ -388,7 +388,7 @@ const Home = props => {
                     <iframe
                         style={{ width: "100%", height: 350, margin: 0, padding: 0, border: 0 }}
                         src={`/player?base=${window.location.origin}${payer.base}/&list=${payer.list.toString()}`}
-                    // src="/player?base=https://blessedman.live/events/10041/record-source/Team-A/aadarsh/generic/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
+                    // src="/player?base=https://blessedman.live/events/10041/record-source/Team-A/aadarsh/appreciation/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
                     />
                 </ModalBody>
             </Modal>
