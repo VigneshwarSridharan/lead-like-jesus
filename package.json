@@ -34,7 +34,7 @@
     "react-dom": "^16.13.1",
     "react-mp3-recorder": "^1.1.2",
     "reactstrap": "^8.5.1",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.4.0",
     "socket.io-client": "^2.3.0",
     "sweetalert2": "^9.15.2",
     "xlsx": "^0.16.3"
