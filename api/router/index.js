@@ -11,6 +11,7 @@ const { parseResponse } = require('../util');
 const audioconcat = require('audioconcat');
 const { exec } = require('child_process');
 const { route } = require('next/dist/next-server/server/router');
+const nodemailer = require("nodemailer");
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -31,6 +32,16 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage: storage })
 const router = express.Router();
+
+const transport = nodemailer.createTransport({
+    host: "smtp.mailtrap.io",
+    port: 2525,
+    auth: {
+        user: "f54f586e8a8dbe",
+        pass: "2d2e3fc42c0016"
+    }
+});
+const TEMPLATE = fs.readFileSync('./api/mail.html', 'utf-8')
 
 router.get('/login/:id', (req, res) => {
     const { id } = req.params;
@@ -336,6 +347,163 @@ router.get('/merge/:id', (req, res) => {
         res.end()
     }
 
+})
+
+const mergeSingleUserAudio = (req) => new Promise((resolve, reject) => {
+    let { eventId, teamId, user, type } = req.params
+    try {
+        var basePath1 = `./public/events/${eventId}/record-source`;
+
+        const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${eventId}/name-list/sheet.xlsx`));
+        const sheet_name_list = workbook.SheetNames;
+        const jsonData = sheet_name_list.reduce((total, item) => {
+            total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]
+            return total
+        }, [])
+        let result = [];
+
+        let nameList = jsonData.filter(f => f.team == teamId);
+        let members = fs.readdirSync(basePath1 + '/' + teamId);
+
+
+        let tempFiles = [];
+        members.map(member => {
+            if (!fs.existsSync(basePath1 + '/' + teamId + '/' + member + '/' + type)) return
+            let files = fs.readdirSync(basePath1 + '/' + teamId + '/' + member + '/' + type)
+
+            if (files.includes(member + '-' + snakeCase(user) + '.mp3')) {
+                tempFiles.push(
+                    basePath1 + '/' + teamId + '/' + member + '/' + type + '/' + member + '-' + snakeCase(user) + '.mp3'
+                )
+                tempFiles.push(
+                    './public/tones/chime.mp3'
+                )
+            }
+        })
+        let output = `./public/events/${eventId}/merged/${teamId}/${type}`
+        fs.mkdirSync(output, { recursive: true });
+
+        if (tempFiles.length) {
+            tempFiles.pop();
+            result.push({
+                files: tempFiles,
+                output: output + '/' + snakeCase(user) + '.mp3'
+            })
+        }
+
+        async.series(
+            result.map(item => function (callback) {
+                mergeAudio(item.files, item.output, req, callback)
+            }),
+            function (err, results) {
+                console.log(err)
+                console.log(results);
+                resolve(`./public/events/${eventId}/merged/${teamId}/${type}/${user}-LLJ.mp3`);
+            }
+        )
+
+    }
+    catch (err) {
+        reject(err)
+    }
+})
+
+router.get('/merge-user-audio/:eventId/:teamId/:user/:type', async (req, res) => {
+    try {
+        let url = await mergeSingleUserAudio(req)
+        res.download(url)
+    }
+    catch (err) {
+        res.status(400).send(err.toString())
+    }
+})
+router.get('/mail-merge-user-audio/:eventId/:teamId/:user/:type', async (req, res) => {
+    try {
+        let { eventId, teamId, user, type } = req.params
+        let url = await mergeSingleUserAudio(req)
+        const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${eventId}/name-list/sheet.xlsx`));
+        const sheet_name_list = workbook.SheetNames;
+        const jsonData = sheet_name_list.reduce((total, item) => {
+            total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]
+            return total
+        }, [])
+        let userDetails = jsonData.find(f => snakeCase(f.name) == user && f.team == teamId)
+
+        let template = TEMPLATE
+        template = template.replace('{{name}}', userDetails.name)
+        template = template.replace('{{content}}', `
+        Thanks for your participation, Herewith we have attached your feedback of teammates
+        <br /><br />
+        <b>Node:</b></br>
+        Please find attachment
+        `)
+        let info = await transport.sendMail({
+            from: 'foo@example.com', // sender address
+            to: userDetails.id, // list of receivers
+            subject: "Lead Like Jesus", // Subject line
+            html: template, // html body
+            attachments: [
+                {
+                    filename: path.resolve(__dirname, '../.' + url).split('\\').pop(),
+                    content: fs.createReadStream(path.resolve(__dirname, '../.' + url)),
+                    // contentType: 'audio/mpeg'
+                }
+            ]
+        });
+
+        res.send({
+            status: 1,
+            userDetails
+        })
+    }
+    catch (err) {
+        res.send({
+            status: 0
+        })
+    }
+})
+
+router.post('/invitation/:id', async (req, res) => {
+    try {
+        let { invitations } = req.body
+        let event = await Event.where({ id: req.params.id }).fetch()
+        event = event.toJSON()
+        console.log(req.params.id)
+        const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${event.id}/name-list/sheet.xlsx`));
+        const sheet_name_list = workbook.SheetNames;
+        const jsonData = sheet_name_list.reduce((total, item) => {
+            total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]
+            return total
+        }, [])
+
+        for (const user of jsonData) {
+            if (invitations.includes(user.id)) {
+                console.log(user.name)
+                let template = TEMPLATE
+                template = template.replace('{{name}}', user.name)
+                template = template.replace('{{content}}', `
+                Herewith we have shared login invitation for ${event.name}
+                <br /><br />
+                <a href="http://zerra.co.in/login?id=${user.id}">Click here to Login</a>
+                `)
+                let info = await transport.sendMail({
+                    from: 'foo@example.com', // sender address
+                    to: user.id, // list of receivers
+                    subject: `Lead Like Jesus - ${event.name} invitation`, // Subject line
+                    html: template, // html body
+                });
+            }
+        }
+
+        res.send({
+            status: 1
+        })
+    }
+    catch (err) {
+        res.send({
+            status: 0
+        })
+    }
 })
 
 module.exports = router;

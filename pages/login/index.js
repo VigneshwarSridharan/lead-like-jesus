@@ -1,18 +1,25 @@
 import { useRouter } from 'next/router'
 import { Container, Row, Col, Card, FormGroup, Label, Input, Button, Form } from "reactstrap"
 import IconBoxArrowRight from "../../components/icons/IconBoxArrowRight"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AuthServie } from "../../lib/APIServices"
 import Swal from 'sweetalert2'
 
 
 const Login = (props) => {
-
+    console.log({ props })
     const [username, setUername] = useState('');
     const router = useRouter()
+    const { id = "" } = router.query
 
-    const handleLogin = (e) => {
-        e.preventDefault();
+    useEffect(() => {
+        if(id) {
+            setUername(id)
+            loginToApp(id)
+        }
+    }, [])
+
+    const loginToApp = username => {
         AuthServie.login(username.trim().toLowerCase()).then(res => {
             if (res.status == "success") {
                 localStorage.setItem('user-details', JSON.stringify(res.data.userDetails))
@@ -26,6 +33,11 @@ const Login = (props) => {
                 )
             }
         })
+    }
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        loginToApp(username)
     }
 
     return (

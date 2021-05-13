@@ -1,17 +1,20 @@
-import { Container, Card, Row, Col, Table, Button, Nav, NavItem, NavLink, TabPane, TabContent, Modal, ModalBody, ModalHeader } from "reactstrap";
+import { Container, Card, Row, Col, Table, Button, Nav, NavItem, NavLink, TabPane, TabContent, Modal, ModalBody, ModalHeader, ListGroupItem, ListGroup, Label, ModalFooter } from "reactstrap";
 import { API_URL } from "../../lib/constants";
 import { useEffect, useState } from "react";
 import Axios from "axios";
 import Link from 'next/link';
-import { EventServices } from "../../lib/APIServices";
+import { EventServices, request } from "../../lib/APIServices";
 import Swal from 'sweetalert2';
+import { snakeCase } from "snake-case";
 
 const Dashboard = (props) => {
-    console.log(props)
     let { eventCount = 0, userCount = 0, activeEvent = {}, } = props
 
+    const [invitationOpen, setInvitationOpen] = useState(false)
+    const [invitations, setInvitations] = useState([])
     const [members, setMembers] = useState(props.members || [])
     const [recordType, setRecordType] = useState([...props.recordType] || []);
+    const toggleInvitationOpen = () => setInvitationOpen(p => !p)
 
     let tabs = members.reduce((total, item) => {
         total[item.team] = total[item.team] || []
@@ -89,6 +92,43 @@ const Dashboard = (props) => {
             Swal.fire('Faild', "Record Type is required", 'error')
         }
     }
+
+    const sendMail = (url) => {
+        let swal = Swal.fire({
+            showConfirmButton: false,
+            title: 'Please Wait..'
+        })
+        request.get(url).then(res => {
+            swal.close()
+            if (res.status) {
+                Swal.fire('Success', 'Mail sent successfully!', 'success')
+            }
+            else {
+                Swal.fire('Sorry!', 'Mail not sent', 'error')
+            }
+            console.log(res)
+        })
+    }
+
+    const sendInvitation = () => {
+        let swal = Swal.fire({
+            showConfirmButton: false,
+            title: 'Please Wait..'
+        })
+        request.post(`/invitation/${activeEvent.id}`, { invitations }).then(res => {
+            swal.close()
+            if (res.status) {
+                Swal.fire('Success', 'Invitation mail sent successfully!', 'success')
+                setInvitationOpen(false)
+            }
+            else {
+                Swal.fire('Sorry!', 'Invitation mail not sent', 'error')
+            }
+        })
+    }
+    useEffect(() => {
+        setInvitations([])
+    }, [invitationOpen])
     return (
         <section className="py-5">
             <Container fluid>
@@ -169,19 +209,21 @@ const Dashboard = (props) => {
                         </Link>
                     </div>
 
-
-                    <Nav tabs>
-                        {Object.keys(tabs).map((name, inx) => {
-                            return (
-                                <NavItem key={inx}>
-                                    <NavLink
-                                        className={`${activeTab === name ? 'active bg-primary text-white border-primary' : ''}`}
-                                        onClick={() => { toggle(name); }}
-                                    >{name}</NavLink>
-                                </NavItem>
-                            )
-                        })}
-                    </Nav>
+                    <div className="d-flex justify-content-between">
+                        <Nav tabs>
+                            {Object.keys(tabs).map((name, inx) => {
+                                return (
+                                    <NavItem key={inx}>
+                                        <NavLink
+                                            className={`${activeTab === name ? 'active bg-primary text-white border-primary' : ''}`}
+                                            onClick={() => { toggle(name); }}
+                                        >{name}</NavLink>
+                                    </NavItem>
+                                )
+                            })}
+                        </Nav>
+                        <Button color="primary" onClick={toggleInvitationOpen}><i className="fas fa-paper-plane mr-2" />Send Invitation</Button>
+                    </div>
                     <TabContent activeTab={activeTab}>
                         {Object.keys(tabs).map((name, inx) => {
                             return (
@@ -207,25 +249,37 @@ const Dashboard = (props) => {
                                                             <td>{item.id}</td>
                                                             <td>{item.team}</td>
                                                             <td>
-                                                                <div className="d-inline mx-2">
+                                                                <div className="d-inline mr-1">
                                                                     {item.submitted.includes('appreciation') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
                                                                 </div>
-                                                                <div className="d-inline mx-2">
+                                                                <div className="d-inline mr-1">
                                                                     {item.submitted.includes('appreciation') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/appreciation', item.appreciationList)}><i className="fas fa-play"></i></Button> : ''}
                                                                 </div>
-                                                                <div className="d-inline mx-2">
+                                                                <div className="d-inline mr-1">
                                                                     {item.submitted.includes('appreciation') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('appreciation', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
+                                                                </div>
+                                                                <div className="d-inline mr-1">
+                                                                    {item.submitted.includes('appreciation') ? <Button tag="a" size={'sm'} href={`${API_URL}/merge-user-audio/${activeEvent.id}/${name}/${snakeCase(item.name)}/appreciation`}><i className="fas fa-clone"></i></Button> : ''}
+                                                                </div>
+                                                                <div className="d-inline">
+                                                                    {item.submitted.includes('appreciation') ? <Button color="warning" className="text-white" size={'sm'} onClick={() => sendMail(`/mail-merge-user-audio/${activeEvent.id}/${name}/${snakeCase(item.name)}/appreciation`)}><i className="fas fa-envelope"></i></Button> : ''}
                                                                 </div>
                                                             </td>
                                                             <td>
-                                                                <div className="d-inline mx-2">
+                                                                <div className="d-inline mr-1">
                                                                     {item.submitted.includes('scripture') ? <i className="fas fa-check text-success"></i> : <i className="fas fa-times text-danger"></i>}
                                                                 </div>
-                                                                <div className="d-inline mx-2">
+                                                                <div className="d-inline mr-1">
                                                                     {item.submitted.includes('scripture') ? <Button color={'info'} size={'sm'} onClick={() => togglePayer(true, item.base + '/scripture', item.scriptureList)}><i className="fas fa-play"></i></Button> : ''}
                                                                 </div>
-                                                                <div className="d-inline mx-2">
+                                                                <div className="d-inline mr-1">
                                                                     {item.submitted.includes('scripture') ? <Button color={'danger'} size={'sm'} onClick={() => deleteAudios('scripture', item, inx)}><i className="far fa-trash-alt"></i></Button> : ''}
+                                                                </div>
+                                                                <div className="d-inline mr-1">
+                                                                    {item.submitted.includes('scripture') ? <Button tag="a" size={'sm'} href={`${API_URL}/merge-user-audio/${activeEvent.id}/${name}/${snakeCase(item.name)}/scripture`}><i className="fas fa-clone"></i></Button> : ''}
+                                                                </div>
+                                                                <div className="d-inline">
+                                                                    {item.submitted.includes('scripture') ? <Button color="warning" className="text-white" size={'sm'} onClick={() => sendMail(`/mail-merge-user-audio/${activeEvent.id}/${name}/${snakeCase(item.name)}/scripture`)}><i className="fas fa-envelope"></i></Button> : ''}
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -249,9 +303,51 @@ const Dashboard = (props) => {
                     <iframe
                         style={{ width: "100%", height: 350, margin: 0, padding: 0, border: 0 }}
                         src={`/player?base=${window.location.origin}${payer.base}/&list=${payer.list.toString()}`}
-                    // src="/player?base=https://blessedman.live/events/10041/record-source/Team-A/aadarsh/appreciation/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
+                    // src="/player?base=https://zerra.co.in/events/10041/record-source/Team-A/aadarsh/appreciation/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
                     />
                 </ModalBody>
+            </Modal>
+
+            <Modal isOpen={invitationOpen} toggle={toggleInvitationOpen}>
+                <ModalHeader toggle={toggleInvitationOpen}>Send Invitation</ModalHeader>
+                <ModalBody className="p-0">
+                    <ListGroup flush>
+                        <ListGroupItem className="py-2 border-bottom pointer" onClick={() => {
+                            if (invitations.length === props.members.length) {
+                                setInvitations([])
+                            }
+                            else {
+                                setInvitations(props.members.map(({ id }) => id))
+                            }
+                        }}>
+                            <i className={`far ${invitations.length === props.members.length ? 'fa-check-square text-primary' : 'fa-square'} mr-1`}></i> Select All
+                        </ListGroupItem>
+                    </ListGroup>
+                </ModalBody>
+                <ModalBody style={{ height: 'calc(100vh - 190px)', overflow: 'auto' }} className="p-0">
+                    <ListGroup flush>
+                        {
+                            props.members.map((item, inx) => {
+                                return (
+                                    <ListGroupItem className="py-2 pointer" onClick={() => {
+                                        if (invitations.includes(item.id)) {
+                                            invitations.splice(invitations.indexOf(item.id), 1)
+                                            setInvitations([...invitations])
+                                        }
+                                        else {
+                                            setInvitations([...invitations, item.id])
+                                        }
+                                    }} key={inx}>
+                                        <i className={`far ${invitations.includes(item.id) ? 'fa-check-square text-primary' : 'fa-square'} mr-1`}></i> {item.name} ({item.team})
+                                    </ListGroupItem>
+                                )
+                            })
+                        }
+                    </ListGroup>
+                </ModalBody>
+                <ModalFooter>
+                    <Button color="primary" onClick={sendInvitation}>Send</Button>
+                </ModalFooter>
             </Modal>
 
         </section>

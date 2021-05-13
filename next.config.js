@@ -5,8 +5,8 @@ const config = {
   API_URL: process.env.API_URL
 }
 
-module.exports = withSass({
+module.exports = {
   /* config options here */
   env: config,
   publicRuntimeConfig: config
-})
+}

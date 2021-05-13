@@ -388,7 +388,7 @@ const Home = props => {
                     <iframe
                         style={{ width: "100%", height: 350, margin: 0, padding: 0, border: 0 }}
                         src={`/player?base=${window.location.origin}${payer.base}/&list=${payer.list.toString()}`}
-                    // src="/player?base=https://blessedman.live/events/10041/record-source/Team-A/aadarsh/appreciation/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
+                    // src="/player?base=https://zerra.co.in/events/10041/record-source/Team-A/aadarsh/appreciation/&list=aadarsh-daisy.mp3,aadarsh-jaagruti.mp3,aadarsh-jones.mp3,aadarsh-nancy.mp3,aadarsh-saji.mp3,aadarsh-sherlyn.mp3,aadarsh-yesuratnam.mp3"
                     />
                 </ModalBody>
             </Modal>

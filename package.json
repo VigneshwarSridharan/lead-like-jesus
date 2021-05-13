@@ -28,15 +28,18 @@
     "moment": "^2.27.0",
     "multer": "^1.4.2",
     "mysql": "^2.18.1",
-    "next": "latest",
+    "next": "^10.0.4",
     "node-sass": "^4.14.1",
+    "nodemailer": "^6.6.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-mp3-recorder": "^1.1.2",
     "reactstrap": "^8.5.1",
+    "sass-loader": "^11.0.1",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0",
     "sweetalert2": "^9.15.2",
+    "webpack": "^5.21.2",
     "xlsx": "^0.16.3"
   }
 }

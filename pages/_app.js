@@ -11,13 +11,12 @@ const App = ({ Component, pageProps, router }) => {
     useEffect(() => {
         const userDetails = JSON.parse(localStorage.getItem('user-details') || '{}')
         const dashboardDetails = JSON.parse(localStorage.getItem('dashboard-details') || '{}')
-
         if (router.pathname.startsWith('/dashboard') ) {
             if(!router.pathname.startsWith('/dashboard/login') && !dashboardDetails.id) {
                 router.push('/dashboard/login')
             }
         }
-        if (!router.pathname.startsWith('/dashboard') && !userDetails.id) {
+        if (!router.pathname.startsWith('/login') && !router.pathname.startsWith('/dashboard') && !userDetails.id) {
             router.push('/login')
         }
         setCheckAuth(true);
