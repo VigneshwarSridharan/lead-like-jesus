@@ -444,7 +444,7 @@ router.get('/mail-merge-user-audio/:eventId/:teamId/:user/:type', async (req, re
             html: template, // html body
             attachments: [
                 {
-                    filename: path.resolve(__dirname, '../.' + url).split('\\').pop(),
+                    filename: path.resolve(__dirname, '../.' + url).split(/\\|\//).pop(),
                     content: fs.createReadStream(path.resolve(__dirname, '../.' + url)),
                     // contentType: 'audio/mpeg'
                 }
