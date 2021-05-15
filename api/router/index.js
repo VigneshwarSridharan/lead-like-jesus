@@ -495,7 +495,7 @@ router.post('/invitation/:id', async (req, res) => {
                 template = template.replace('{{content}}', `
                 Herewith we have shared login invitation for ${event.name}
                 <br /><br />
-                <a href="http://zerra.co.in/login?id=${user.id}">Click here to Login</a>
+                <a href="https://zerra.co.in/login?id=${user.id}">Click here to Login</a>
                 `)
                 let info = await transport.sendMail({
                     from: mailConfig.username, // sender address
