@@ -33,13 +33,24 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 const router = express.Router();
 
+let mailConfig = {
+    username: 'audio.llj@gmail.com',
+    password: 'Audio.llj@12'
+}
+
 const transport = nodemailer.createTransport({
-    host: "smtp.mailtrap.io",
-    port: 2525,
+    service: 'gmail',
+    host: 'smtp.gmail.com',
     auth: {
-        user: "f54f586e8a8dbe",
-        pass: "2d2e3fc42c0016"
-    }
+        user: mailConfig.username,
+        pass: mailConfig.password
+    },
+    // host: "smtp.mailtrap.io",
+    // port: 2525,
+    // auth: {
+    //     user: "f54f586e8a8dbe",
+    //     pass: "2d2e3fc42c0016"
+    // }
 });
 const TEMPLATE = fs.readFileSync('./api/mail.html', 'utf-8')
 
@@ -438,7 +449,7 @@ router.get('/mail-merge-user-audio/:eventId/:teamId/:user/:type', async (req, re
         Please find attachment
         `)
         let info = await transport.sendMail({
-            from: 'foo@example.com', // sender address
+            from: mailConfig.username, // sender address
             to: userDetails.id, // list of receivers
             subject: "Lead Like Jesus", // Subject line
             html: template, // html body
@@ -487,7 +498,7 @@ router.post('/invitation/:id', async (req, res) => {
                 <a href="http://zerra.co.in/login?id=${user.id}">Click here to Login</a>
                 `)
                 let info = await transport.sendMail({
-                    from: 'foo@example.com', // sender address
+                    from: mailConfig.username, // sender address
                     to: user.id, // list of receivers
                     subject: `Lead Like Jesus - ${event.name} invitation`, // Subject line
                     html: template, // html body
