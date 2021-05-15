@@ -512,7 +512,8 @@ router.post('/invitation/:id', async (req, res) => {
     }
     catch (err) {
         res.send({
-            status: 0
+            status: 0,
+            error: err.toString()
         })
     }
 })
