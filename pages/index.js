@@ -58,7 +58,7 @@ const Home = props => {
                     let inx = teamMembersTable.findIndex(f => f.id === person.id)
                     teamMembersTable[inx]['submitted'] = teamMembersTable[inx]['submitted'].filter(f => f != type)
                     setTeamMembersTable([...teamMembersTable])
-                    if(person.id == userDetails.id) {
+                    if (person.id == userDetails.id) {
                         window.location.reload();
                     }
 
@@ -203,6 +203,23 @@ const Home = props => {
         isSubmitted['scripture'] = true
     }
 
+    const sendMail = (url) => {
+        let swal = Swal.fire({
+            showConfirmButton: false,
+            title: 'Please Wait..'
+        })
+        request.get(url).then(res => {
+            swal.close()
+            if (res.status) {
+                Swal.fire('Success', 'Mail sent successfully!', 'success')
+            }
+            else {
+                Swal.fire('Sorry!', 'Mail not sent', 'error')
+            }
+            console.log(res)
+        })
+    }
+
 
 
     if (!permisstion) {
@@ -294,7 +311,26 @@ const Home = props => {
                         {
                             props.recordType.includes(recordType) ? (
                                 <div>
-
+                                    {
+                                        props.allowDownload.includes(recordType) && (
+                                            <Card body className="mb-2 flex-row justify-content-between">
+                                                <div>
+                                                    Download / Share Your feedback
+                                                </div>
+                                                <div className="d-flex">
+                                                    <div className=" mr-1">
+                                                        <Button tag="a" size={'sm'} href={`${API_URL}/merge-user-audio/${activeEvent.value}/${userDetails.team}/${snakeCase(userDetails.name)}/${recordType}`}><i className="fas fa-download"></i></Button>
+                                                    </div>
+                                                    <div className="mr-1">
+                                                        <Button color="warning" className="text-white" size={'sm'} onClick={() => sendMail(`/mail-merge-user-audio/${activeEvent.value}/${userDetails.team}/${snakeCase(userDetails.name)}/${recordType}`)}><i className="fas fa-envelope"></i></Button>
+                                                    </div>
+                                                    <div className="">
+                                                        <Button color="success" tag="a" size={'sm'} href={`https://wa.me/?text=${encodeURIComponent(`${API_URL}/merge-user-audio/${activeEvent.value}/${userDetails.team}/${snakeCase(userDetails.name)}/${recordType}`)}`} target="_blank"><i className="fab fa-whatsapp"></i></Button>
+                                                    </div>
+                                                </div>
+                                            </Card>
+                                        )
+                                    }
                                     {
                                         isSubmitted[recordType] && (
                                             <Alert color="success">
@@ -303,6 +339,7 @@ const Home = props => {
                                             </Alert>
                                         )
                                     }
+
 
                                     <Card body className="mb-3">
                                         <ListGroup flush>
@@ -346,10 +383,10 @@ const Home = props => {
                                                                         />
                                                                     </div>
                                                                 ) : (
-                                                                        !item[recordType] ? (
-                                                                            <i className="fas fa-times text-danger p-3 pointer" onClick={() => removeAudio(inx)} title="Delete"></i>
-                                                                        ) : ''
-                                                                    )
+                                                                    !item[recordType] ? (
+                                                                        <i className="fas fa-times text-danger p-3 pointer" onClick={() => removeAudio(inx)} title="Delete"></i>
+                                                                    ) : ''
+                                                                )
                                                             }
                                                         </div>
                                                     </ListGroupItem>
@@ -399,10 +436,13 @@ const Home = props => {
 export async function getServerSideProps(context) {
 
     let response = await Axios.get(`${API_URL}/event/record-type`)
+    let response1 = await Axios.get(`${API_URL}/event/allow-download`)
     response = response.data
+    response1 = response1.data
     return {
         props: {
-            recordType: response.data || {}
+            recordType: response.data || {},
+            allowDownload: response1.data || {},
         }, // will be passed to the page component as props
     }
 }

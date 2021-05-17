@@ -51,16 +51,21 @@ router.get('/', (req, res) => {
         callback => Config.collection().where({ name: "record_type" }).fetchOne().then(recordType => {
             recordType = recordType.toJSON()
             callback(null, recordType.value.split(','))
+        }),
+        callback => Config.collection().where({ name: "allow_download" }).fetchOne().then(allowDownload => {
+            allowDownload = allowDownload.toJSON()
+            callback(null, allowDownload.value.split(','))
         })
     ], (err, result) => {
         if (err) console.log(err)
-        let [userCount = 0, eventCount = 0, members = [], activeEvent = {}, recordType = {}] = result || [];
+        let [userCount = 0, eventCount = 0, members = [], activeEvent = {}, recordType = [], allowDownload = []] = result || [];
         parseResponse(res, null, {
             userCount,
             eventCount,
             members,
             activeEvent,
-            recordType
+            recordType,
+            allowDownload
         })
     })
 })

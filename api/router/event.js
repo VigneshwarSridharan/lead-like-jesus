@@ -126,6 +126,25 @@ router.post('/record-type', (req, res) => {
             parseResponse(res, err, {})
         })
 })
+router.get('/allow-download', (req, res) => {
+    Config.where({ name: "allow_download" }).fetch().then(recordType => {
+        recordType = recordType.toJSON()
+        parseResponse(res, null, recordType.value.split(','))
+
+    }).catch(err => {
+        parseResponse(res, null, {  recordType: {} })
+
+    })
+})
+router.post('/allow-download', (req, res) => {
+    Config.where({ name: "allow_download" }).save({ value: req.body.allowDownload.toString() }, { method: 'update', patch: true })
+        .then(res => {
+            parseResponse(res, null, { recordType: res })
+        })
+        .catch(err => {
+            parseResponse(res, err, {})
+        })
+})
 
 router.get('/:id', (req, res) => {    //edit data
     Event.where({ id: req.params.id }).fetch().then(event => {

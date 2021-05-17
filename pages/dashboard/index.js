@@ -14,6 +14,7 @@ const Dashboard = (props) => {
     const [invitations, setInvitations] = useState([])
     const [members, setMembers] = useState(props.members || [])
     const [recordType, setRecordType] = useState([...props.recordType] || []);
+    const [allowDownload, setAllowDownload] = useState([...props.allowDownload] || []);
     const toggleInvitationOpen = () => setInvitationOpen(p => !p)
 
     let tabs = members.reduce((total, item) => {
@@ -92,6 +93,22 @@ const Dashboard = (props) => {
             Swal.fire('Faild', "Record Type is required", 'error')
         }
     }
+    const updateAllowDownload = () => {
+        EventServices.updateAllowDownload({ allowDownload }).then(res => {
+            Swal.fire(
+                'Success!',
+                'Updated Successfully',
+                'success'
+            )
+        }).catch(err => {
+            console.log(err)
+            Swal.fire(
+                'Sorry!',
+                'Faild to update',
+                'error'
+            )
+        })
+    }
 
     const sendMail = (url) => {
         let swal = Swal.fire({
@@ -168,7 +185,7 @@ const Dashboard = (props) => {
                     </Col>
                 </Row>
                 <Card body className="mb-3">
-                    <h5 className="mb-3">Record Type</h5>
+                    <h6 className="mb-2">Record Type</h6>
                     <Row className="align-items-center">
                         {
                             ["appreciation", "scripture"].map((item, inx) => {
@@ -198,6 +215,39 @@ const Dashboard = (props) => {
                         }
                         <Col className="text-center">
                             <Button color="success" onClick={updateRecordType} disabled={(recordType.toString() === props.recordType.toString())}>Update</Button>
+                        </Col>
+                    </Row>
+                    <hr />
+                    <h6 className="mb-2">Allow Download</h6>
+                    <Row className="align-items-center">
+                        {
+                            ["appreciation", "scripture"].map((item, inx) => {
+                                let active = allowDownload.includes(item);
+                                return (
+                                    <Col key={inx}>
+                                        <Card
+                                            body
+                                            className={`text-capitalize flex-row align-items-center pointer ${active ? 'bg-primary text-white border-primary' : ''}`}
+                                            onClick={() => {
+                                                if (active) {
+                                                    allowDownload.splice(inx, 1)
+                                                    setAllowDownload([...allowDownload])
+                                                }
+                                                else {
+                                                    allowDownload.push(item);
+                                                    allowDownload.sort()
+                                                    setAllowDownload([...allowDownload])
+                                                }
+                                            }}
+                                        >
+                                            <i className={`far ${active ? 'fa-check-square ' : 'fa-square'} mr-3`}></i> <b>{item}</b>
+                                        </Card>
+                                    </Col>
+                                )
+                            })
+                        }
+                        <Col className="text-center">
+                            <Button color="success" onClick={updateAllowDownload} disabled={(allowDownload.toString() === props.allowDownload.toString())}>Update</Button>
                         </Col>
                     </Row>
                 </Card>
