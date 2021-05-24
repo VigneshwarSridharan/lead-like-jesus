@@ -5,6 +5,11 @@ import { useRouter } from "next/router";
 let sidebardata = [
     
     {
+        name: 'Mails',
+        icon: 'fas fa-envelope',
+        path: '/dashboard/mails',
+    },
+    {
         name: 'Users',
         icon: 'fas fa-user',
         path: '/dashboard/user',

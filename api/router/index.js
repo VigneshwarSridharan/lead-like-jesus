@@ -6,7 +6,7 @@ const multer = require('multer')
 const async = require('async');
 const archiver = require('archiver');
 const { snakeCase } = require('change-case')
-const { Event, Config } = require('../modal/bookshelf');
+const { Event, Config, MailConfig } = require('../modal/bookshelf');
 const { parseResponse } = require('../util');
 const audioconcat = require('audioconcat');
 const { exec } = require('child_process');
@@ -365,15 +365,8 @@ const mergeSingleUserAudio = (req) => new Promise((resolve, reject) => {
     try {
         var basePath1 = `./public/events/${eventId}/record-source`;
 
-        const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${eventId}/name-list/sheet.xlsx`));
-        const sheet_name_list = workbook.SheetNames;
-        const jsonData = sheet_name_list.reduce((total, item) => {
-            total = [...total, ...XLSX.utils.sheet_to_json(workbook.Sheets[item]).map(i => ({ ...i, team: item }))]
-            return total
-        }, [])
         let result = [];
 
-        let nameList = jsonData.filter(f => f.team == teamId);
         let members = fs.readdirSync(basePath1 + '/' + teamId);
 
 
@@ -431,6 +424,9 @@ router.get('/merge-user-audio/:eventId/:teamId/:user/:type', async (req, res) =>
 router.get('/mail-merge-user-audio/:eventId/:teamId/:user/:type', async (req, res) => {
     try {
         let { eventId, teamId, user, type } = req.params
+        let mailContent = await MailConfig.where({ name: 'SEND_AUDIO_MAIL' }).fetch()
+        mailContent = mailContent.toJSON()
+        console.log(mailContent)
         let url = await mergeSingleUserAudio(req)
         const workbook = XLSX.readFile(path.join(__dirname, `../../public/events/${eventId}/name-list/sheet.xlsx`));
         const sheet_name_list = workbook.SheetNames;
@@ -442,16 +438,11 @@ router.get('/mail-merge-user-audio/:eventId/:teamId/:user/:type', async (req, re
 
         let template = TEMPLATE
         template = template.replace('{{name}}', userDetails.name)
-        template = template.replace('{{content}}', `
-        Thanks for your participation, Herewith we have attached your feedback of teammates
-        <br /><br />
-        <b>Node:</b></br>
-        Please find attachment
-        `)
+        template = template.replace('{{content}}', mailContent.content)
         let info = await transport.sendMail({
             from: mailConfig.username, // sender address
             to: userDetails.id, // list of receivers
-            subject: "Lead Like Jesus", // Subject line
+            subject: mailContent.subject.replace('{{type}}', type), // Subject line
             html: template, // html body
             attachments: [
                 {
@@ -468,6 +459,7 @@ router.get('/mail-merge-user-audio/:eventId/:teamId/:user/:type', async (req, re
         })
     }
     catch (err) {
+        console.log(err)
         res.send({
             status: 0
         })
@@ -514,6 +506,57 @@ router.post('/invitation/:id', async (req, res) => {
         res.send({
             status: 0,
             error: err.toString()
+        })
+    }
+})
+
+router.post('/send-audio-mails/:eventId', async (req, res, next) => {
+    try {
+        let { eventId } = req.params
+        let { users, type } = req.body
+        let mailContent = await MailConfig.where({ name: 'SEND_AUDIO_MAIL' }).fetch()
+
+        for (const userItem of users) {
+            try {
+                req.params = {
+                    eventId,
+                    teamId: userItem.team,
+                    user: userItem.name,
+                    type
+                }
+                let url = await mergeSingleUserAudio(req)
+                let userDetails = userItem
+                let template = TEMPLATE
+
+                template = template.replace('{{name}}', userDetails.name)
+                template = template.replace('{{content}}', mailContent.content)
+                let info = await transport.sendMail({
+                    from: mailConfig.username, // sender address
+                    to: userDetails.id, // list of receivers
+                    subject: mailContent.subject.replace('{{type}}', type), // Subject line
+                    html: template, // html body
+                    attachments: [
+                        {
+                            filename: path.resolve(__dirname, '../.' + url).split(/\\|\//).pop(),
+                            content: fs.createReadStream(path.resolve(__dirname, '../.' + url)),
+                            // contentType: 'audio/mpeg'
+                        }
+                    ]
+                });
+
+            }
+            catch (err) {
+                console.log(err)
+            }
+        }
+
+        res.send({
+            status: 1
+        })
+    }
+    catch (err) {
+        res.send({
+            status: 0
         })
     }
 })

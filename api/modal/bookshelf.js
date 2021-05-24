@@ -35,10 +35,15 @@ const Event = bookshelf.model('Event', {
 const Config = bookshelf.model('Config', {
     tableName: 'configs',
 })
+
+const MailConfig = bookshelf.model('MailConfig', {
+    tableName: 'mail_configs',
+})
 module.exports = {
     User,
     Role,
     Temp,
     Event,
-    Config
+    Config,
+    MailConfig
 };

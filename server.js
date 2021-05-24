@@ -6,6 +6,7 @@ const APIRouters = require('./api/router')
 const AuthRouters = require('./api/router/auth')
 const DashboardRouters = require('./api/router/dashboard')
 const EventRouters = require('./api/router/event')
+const MailConfigRouters = require('./api/router/mail-config')
 
 const port = parseInt(process.env.PORT, 10) || 8080
 const dev = process.env.NODE_ENV !== 'production'
@@ -27,6 +28,7 @@ app.prepare().then(() => {
   server.use('/api/auth', AuthRouters)
   server.use('/api/event', EventRouters)
   server.use('/api/dashboard', DashboardRouters)
+  server.use('/api/mail-config', MailConfigRouters)
 
   server.get('/a', (req, res) => {
     return app.render(req, res, '/a', req.query)

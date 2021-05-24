@@ -1,4 +1,4 @@
-import { Container, Card, Row, Col, Table, Button, Nav, NavItem, NavLink, TabPane, TabContent, Modal, ModalBody, ModalHeader, ListGroupItem, ListGroup, Label, ModalFooter } from "reactstrap";
+import { Container, Card, Row, Col, Table, Button, Nav, NavItem, NavLink, TabPane, TabContent, Modal, ModalBody, ModalHeader, ListGroupItem, ListGroup, Label, ModalFooter, Input, FormGroup } from "reactstrap";
 import { API_URL } from "../../lib/constants";
 import { useEffect, useState } from "react";
 import Axios from "axios";
@@ -12,10 +12,14 @@ const Dashboard = (props) => {
 
     const [invitationOpen, setInvitationOpen] = useState(false)
     const [invitations, setInvitations] = useState([])
+    const [sendAudioOpen, setSendAudioOpen] = useState(false)
+    const [audioType, setAudioType] = useState('scripture')
+    const [sendAudio, setSendAudio] = useState([])
     const [members, setMembers] = useState(props.members || [])
     const [recordType, setRecordType] = useState([...props.recordType] || []);
     const [allowDownload, setAllowDownload] = useState([...props.allowDownload] || []);
     const toggleInvitationOpen = () => setInvitationOpen(p => !p)
+    const toggleSendAudioOpen = () => setSendAudioOpen(p => !p)
 
     let tabs = members.reduce((total, item) => {
         total[item.team] = total[item.team] || []
@@ -143,9 +147,28 @@ const Dashboard = (props) => {
             }
         })
     }
+    const sendAudioMails = () => {
+        let swal = Swal.fire({
+            showConfirmButton: false,
+            title: 'Please Wait..'
+        })
+        request.post(`/send-audio-mails/${activeEvent.id}`, { users: sendAudio, type: audioType }).then(res => {
+            swal.close()
+            if (res.status) {
+                Swal.fire('Success', 'Invitation mail sent successfully!', 'success')
+                setSendAudioOpen(false)
+            }
+            else {
+                Swal.fire('Sorry!', 'Invitation mail not sent', 'error')
+            }
+        })
+    }
     useEffect(() => {
         setInvitations([])
     }, [invitationOpen])
+    useEffect(() => {
+        setSendAudio([])
+    }, [setSendAudioOpen])
     return (
         <section className="py-5">
             <Container fluid>
@@ -272,7 +295,10 @@ const Dashboard = (props) => {
                                 )
                             })}
                         </Nav>
-                        <Button color="primary" onClick={toggleInvitationOpen}><i className="fas fa-paper-plane mr-2" />Send Invitation</Button>
+                        <div>
+                            <Button color="primary" onClick={toggleSendAudioOpen} className="mr-1"><i className="fas fa-paper-plane mr-2" />Send Audio</Button>
+                            <Button color="primary" onClick={toggleInvitationOpen}><i className="fas fa-paper-plane mr-2" />Send Invitation</Button>
+                        </div>
                     </div>
                     <TabContent activeTab={activeTab}>
                         {Object.keys(tabs).map((name, inx) => {
@@ -397,6 +423,61 @@ const Dashboard = (props) => {
                 </ModalBody>
                 <ModalFooter>
                     <Button color="primary" onClick={sendInvitation}>Send</Button>
+                </ModalFooter>
+            </Modal>
+
+            <Modal isOpen={sendAudioOpen} toggle={toggleSendAudioOpen}>
+                <ModalHeader toggle={toggleSendAudioOpen}>Send audio using mail</ModalHeader>
+                <ModalBody className="p-0">
+                    <ListGroup flush>
+                        <ListGroupItem className="py-2 border-bottom pointer" onClick={() => {
+                            if (sendAudio.length === props.members.length) {
+                                setSendAudio([])
+                            }
+                            else {
+                                setSendAudio(props.members)
+                            }
+                        }}>
+                            <i className={`far ${sendAudio.length === props.members.length ? 'fa-check-square text-primary' : 'fa-square'} mr-1`}></i> Select All
+                        </ListGroupItem>
+                    </ListGroup>
+                </ModalBody>
+                <ModalBody style={{ height: 'calc(100vh - 190px)', overflow: 'auto' }} className="p-0">
+                    <ListGroup flush>
+                        {
+                            props.members.map((item, inx) => {
+                                return (
+                                    <ListGroupItem className="py-2 pointer" onClick={() => {
+                                        if (sendAudio.findIndex(f => f.id === item.id) != -1) {
+                                            sendAudio.splice(sendAudio.findIndex(f => f.id == item.id), 1)
+                                            setSendAudio([...sendAudio])
+                                        }
+                                        else {
+                                            setSendAudio([...sendAudio, item])
+                                        }
+                                    }} key={inx}>
+                                        <i className={`far ${sendAudio.findIndex(f => f.id == item.id) != -1 ? 'fa-check-square text-primary' : 'fa-square'} mr-1`}></i> {item.name} ({item.team})
+                                    </ListGroupItem>
+                                )
+                            })
+                        }
+                    </ListGroup>
+                </ModalBody>
+                <ModalFooter className="justify-content-between">
+                    <div className="d-flex">
+                        {
+                            ["appreciation", "scripture"].map((item, inx) => {
+                                return (
+                                    <div className="mr-3 pointer text-capitalize" onClick={() => setAudioType(item)} key={inx}>
+                                        <i className={`${audioType === item ? 'fas fa-dot-circle text-primary' : 'far fa-circle text-body'} mr-1`} /> {item}
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                    <div>
+                        <Button color="primary" onClick={sendAudioMails}>Send</Button>
+                    </div>
                 </ModalFooter>
             </Modal>
 
